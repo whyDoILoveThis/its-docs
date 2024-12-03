@@ -1,0 +1,58 @@
+[debug] [2024-11-30T04:12:01.237Z] ----------------------------------------------------------------------
+[debug] [2024-11-30T04:12:01.240Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Ian\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2024-11-30T04:12:01.241Z] CLI Version:   13.22.0
+[debug] [2024-11-30T04:12:01.241Z] Platform:      win32
+[debug] [2024-11-30T04:12:01.241Z] Node Version:  v20.11.1
+[debug] [2024-11-30T04:12:01.241Z] Time:          Fri Nov 29 2024 22:12:01 GMT-0600 (Central Standard Time)
+[debug] [2024-11-30T04:12:01.241Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2024-11-30T04:12:01.249Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2024-11-30T04:12:01.250Z] > authorizing via signed-in user (iannsmif@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\Ian\Desktop\projects\its-the-docs
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2024-11-30T04:12:12.234Z] Checked if tokens are valid: false, expires at: 1729812173943
+[debug] [2024-11-30T04:12:12.235Z] Checked if tokens are valid: false, expires at: 1729812173943
+[debug] [2024-11-30T04:12:12.235Z] > refreshing access token with scopes: []
+[debug] [2024-11-30T04:12:12.237Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2024-11-30T04:12:12.237Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2024-11-30T04:12:12.872Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2024-11-30T04:12:12.872Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2024-11-30T04:12:12.892Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=100
+[debug] [2024-11-30T04:12:13.582Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2024-11-30T04:12:13.582Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] i  Using project notes-fcaf8 (notes) 
+[info] 
+=== Storage Setup
+[info] 
+[info] Firebase Storage Security Rules allow you to define how and when to allow
+[info] uploads and downloads. You can keep these rules in your project directory
+[info] and publish them with firebase deploy.
+[info] 
+[info] +  Wrote storage.rules 
+[info] 
+[info] i  Writing configuration info to firebase.json... 
+[info] i  Writing project information to .firebaserc... 
+[info] 
+[info] +  Firebase initialization complete! 
+[debug] [2024-11-30T04:12:29.244Z] Error: Timed out.
+    at Timeout._onTimeout (C:\Users\Ian\AppData\Roaming\npm\node_modules\firebase-tools\lib\utils.js:268:49)
+    at listOnTimeout (node:internal/timers:573:17)
+    at process.processTimers (node:internal/timers:514:7)
+[error] 
+[error] Error: An unexpected error has occurred.
