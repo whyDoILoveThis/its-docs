@@ -7,6 +7,8 @@ import { useConfirm } from "@/components/ItsConfirmProvider";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import docItemStyles from "./docItemStyles";
 import axios from "axios";
+import { useLocalDocItemsStore } from "@/hooks/useLocalDocItemsStore";
+import EyeIcon from "@/components/icons/EyeIcon";
 
 interface Props {
   doc: Doc;
@@ -22,21 +24,26 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
   });
   const [moveMode, setMoveMode] = useState(false); // Toggle move item mode
   const [editMode, setEditMode] = useState(false);
-  const [localDocItems, setLocalDocItems] = useState<DocItem[]>([
-    { style: "", text: "", uid: "" },
-  ]); // Local copy for manipulation
+  const [addMode, setAddMode] = useState(false);
+  const { localDocItems, setLocalDocItems } = useLocalDocItemsStore();
   const [loading, setLoading] = useState(false);
   const { ItsConfirm } = useConfirm();
   const [selectedDocIndex, setSelectedDocIndex] = useState(-999);
   const [editDocItemIndex, setEditDocItemIndex] = useState(-999);
   const [loadingDelete, setLoadingDelete] = useState(false);
   const [codeLang, setCodeLang] = useState("tsx");
-  const [tempItemText, setTempItemText] = useState("");
-  const safeCopyOfItems = doc.docItems;
+  const [tempItemText, setTempItemText] = useState<(string | null)[]>([]);
+  const [tempItemStyles, setTempItemStyles] = useState<(string | null)[]>([]);
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [showTheUnsavedChanges, setShowTheUnsavedChanges] = useState(false);
+  const [unsavedItemUids, setUnsavedItemUids] = useState<(string | null)[]>([]);
 
   useEffect(() => {
     setLocalDocItems(doc.docItems);
-  }, [doc.docItems]);
+    console.log("setLocalDocItems");
+  }, [doc.docItems, setLocalDocItems]);
+
+  if (!localDocItems) return;
 
   // Move item up locally
   const moveItemUp = (index: number) => {
@@ -60,7 +67,25 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
     setLocalDocItems(updatedItems);
   };
 
-  const setItemStyle = (index: number, newStyle: string) => {
+  const setItemStyle = (index: number, newStyle: string, uid: string) => {
+    // Create a copy of the array
+    const modifiedItemUids = [...unsavedItemUids];
+
+    // Update the specific index
+    modifiedItemUids[index] = uid;
+
+    // Update the state
+    setUnsavedItemUids(modifiedItemUids);
+
+    // Create a copy of the array
+    const updatedStrings = [...tempItemStyles];
+
+    // Update the specific index
+    updatedStrings[index] = newStyle;
+
+    // Update the state
+    setTempItemStyles(updatedStrings);
+
     const updatedItems = [...localDocItems];
 
     // Update the style of the specified item
@@ -70,18 +95,30 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
     setLocalDocItems(updatedItems);
   };
 
-  const setItemText = (index: number, newText: string) => {
-    const updatedItems = [...localDocItems];
+  const setItemText = (index: number, newText: string | null) => {
+    // Create a copy of the array
+    const updatedStrings = [...tempItemText];
 
-    // Update the style of the specified item
-    updatedItems[index].text = newText;
+    // Update the specific index
+    updatedStrings[index] = newText;
 
-    // Update state
-    setLocalDocItems(updatedItems);
+    // Update the state
+    setTempItemText(updatedStrings);
   };
+
+  console.log(localDocItems, tempItemText);
 
   // Save updated items to the database
   const saveUpdatedDocItems = async () => {
+    const theItems = localDocItems;
+    // Merge tempItemText into localDocItems
+    const updatedDocItems = theItems.map((item, index) => {
+      return {
+        ...item, // Preserve other properties of the item
+        text: tempItemText[index] ? tempItemText[index] : item.text, // Update text only if tempItemText[index] exists
+      };
+    });
+
     try {
       setLoading(true);
       const response = await fetch("/api/updateDocItems", {
@@ -90,7 +127,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
         body: JSON.stringify({
           projUid,
           docUid: doc.uid,
-          docItems: localDocItems,
+          docItems: updatedDocItems, // Use the merged array
         }),
       });
       console.log(response);
@@ -159,19 +196,27 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
     if (confirmed) {
       if (moveMode) {
         setMoveMode(false);
-        setLocalDocItems(safeCopyOfItems);
+        setTempItemText([]);
       }
       if (editMode) {
-        setLocalDocItems(safeCopyOfItems);
+        setEditMode(false);
+        setTempItemText([]);
+        if (tempItemStyles.length > 0) {
+          setUnsavedChanges(true);
+        }
       }
 
-      setTimeout(() => {
-        setLocalDocItems(safeCopyOfItems);
-      }, 500);
+      setLocalDocItems(doc.docItems);
     }
   };
 
-  console.log(doc.docItems[0].text);
+  const handleToggleAddMode = (on: boolean) => {
+    if (on) {
+      setAddMode(true);
+    } else if (!on) {
+      setAddMode(false);
+    }
+  };
 
   if (loadingDelete) {
     return (
@@ -183,6 +228,112 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
 
   return (
     <div className="mb-24 flex flex-col items-center gap-2 w-full">
+      {tempItemStyles.length > 0 && (
+        <div className="w-[45px] rounded-sm overflow-hidden bg-black bg-opacity-20 h-[25px] backdrop-blur-sm fixed place-self-start" />
+      )}{" "}
+      {tempItemStyles.length > 0 &&
+        unsavedChanges &&
+        !editMode &&
+        !moveMode && (
+          <div className="fixed flex flex-col justify-center bottom-24 left-{50%} btn btn-nohover btn-red backdrop-blur-lg !bg-opacity-45">
+            {/** Unsaved changes pop */}
+            <div
+              className={`flex items-center ${
+                showTheUnsavedChanges ? "flex-col gap-1" : "justify-between"
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                <p className="text-xl font-bold">UNSAVED STYLES</p>
+                <button
+                  onClick={() => {
+                    setShowTheUnsavedChanges(!showTheUnsavedChanges);
+                  }}
+                  className="btn btn-xs !p-1 !py-0 !text-[14px] btn-squish"
+                >
+                  {showTheUnsavedChanges ? (
+                    <p className="text-xs">Hide</p>
+                  ) : (
+                    <EyeIcon />
+                  )}
+                </button>
+                {showTheUnsavedChanges && (
+                  <div>
+                    {unsavedItemUids.map((itemUid, index) => {
+                      const item = localDocItems.find((i) => i.uid === itemUid);
+
+                      if (!item) return null;
+
+                      return (
+                        <div
+                          key={index}
+                          className="flex flex-col items-center bg-black p-2 bg-opacity-70 rounded-md mt-1.5"
+                        >
+                          {item.style !== "code" &&
+                          editDocItemIndex !== index ? (
+                            <div
+                              onClick={() => {
+                                setSelectedDocIndex(index);
+                                setEditDocItemIndex(-999);
+                              }}
+                              className={`btn btn-nohover ${
+                                item.style !== "code" && item.style
+                              } ${
+                                item.style === "text-xl font-bold " &&
+                                "!border-none !bg-transparent text-center leading-none mt-6"
+                              } ${
+                                editMode ? "!cursor-pointer" : "!cursor-default"
+                              } !w-full !max-w-[500px]`}
+                            >
+                              <p>
+                                {tempItemText[index]
+                                  ? tempItemText[index]
+                                  : item.text}
+                              </p>
+                            </div>
+                          ) : (
+                            editDocItemIndex !== index &&
+                            item.style === "code" && (
+                              <span
+                                className={` ${
+                                  editMode
+                                    ? "!cursor-pointer"
+                                    : "!cursor-default"
+                                }`}
+                                onClick={() => {
+                                  setSelectedDocIndex(index);
+                                  setEditDocItemIndex(-999);
+                                }}
+                              >
+                                <ItsCode
+                                  code={
+                                    tempItemText[index]
+                                      ? tempItemText[index]
+                                      : item.text
+                                  }
+                                  lang={"tsx"}
+                                />
+                              </span>
+                            )
+                          )}{" "}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <button
+                className="btn btn-green backdrop-blur-md "
+                onClick={saveUpdatedDocItems}
+                disabled={loading}
+              >
+                {loading ? <LoaderSpinSmall /> : "Save Changes"}
+              </button>
+            </div>
+            <p className="mt-2 text-center">
+              These changes will be gone when you refresh or close this page!!!
+            </p>
+          </div>
+        )}
       {/** SETTINGS BTN */}
       <div className="w-fit fixed place-self-end">
         <ItsDropdown
@@ -218,6 +369,24 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
             {moveMode ? "Exit Move Mode" : "Move Mode"}
           </li>
           <li
+            onClick={() => handleToggleAddMode(true)}
+            className={`btn btn-ghost text-nowrap ${
+              (editMode && "blur-sm") || (moveMode && "blur-sm")
+            }`}
+            style={{ width: "100%" }}
+          >
+            Add Mode
+          </li>
+          <li
+            onClick={() => handleToggleAddMode(false)}
+            className={`btn btn-ghost text-nowrap ${
+              (editMode && "blur-sm") || (moveMode && "blur-sm")
+            }`}
+            style={{ width: "100%" }}
+          >
+            Read Only Mode
+          </li>
+          <li
             onClick={() => handleDeleteDoc()}
             className={`btn btn-ghost btn-red ${
               (editMode && "blur-sm") || (moveMode && "blur-sm")
@@ -228,16 +397,14 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
           </li>
         </ItsDropdown>
       </div>
-
       {/** HEAADING */}
       <h1 className="font-bold">{doc.title}</h1>
       <p className="mb-4">{doc.tagline && doc.tagline}</p>
       <p>{doc.desc && doc.desc}</p>
-
       {/** SAVE BTN */}
       {moveMode && (
         <button
-          className="btn btn-green fixed bottom-2 backdrop-blur-md place-self-end"
+          className="btn btn-green fixed bottom-2 backdrop-blur-md z-10 place-self-end"
           onClick={saveUpdatedDocItems}
           disabled={loading}
         >
@@ -253,7 +420,6 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
           {loading ? <LoaderSpinSmall /> : "Save Changes"}
         </button>
       )}
-
       {/**  DOC ITEMS */}
       {localDocItems &&
         localDocItems.map((item: DocItem, index) => (
@@ -274,7 +440,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                     editMode ? "!cursor-pointer" : "!cursor-default"
                   } !w-full !max-w-[500px]`}
                 >
-                  <p>{tempItemText !== "" ? tempItemText : item.text}</p>
+                  <p>{tempItemText[index] ? tempItemText[index] : item.text}</p>
                 </div>
               ) : editDocItemIndex !== index && item.style === "code" ? (
                 <span
@@ -286,12 +452,15 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                     setEditDocItemIndex(-999);
                   }}
                 >
-                  <ItsCode code={item.text} lang={"tsx"} />
+                  <ItsCode
+                    code={tempItemText[index] ? tempItemText[index] : item.text}
+                    lang={"tsx"}
+                  />
                 </span>
               ) : item.style === "code" && editDocItemIndex === index ? (
                 <span>
                   <ItsCode
-                    code={tempItemText !== "" ? tempItemText : item.text}
+                    code={tempItemText[index] ? tempItemText[index] : item.text}
                     lang={codeLang}
                   />
                   <textarea
@@ -299,7 +468,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                     defaultValue={item.text}
                     autoFocus
                     onChange={(e) => {
-                      setTempItemText(e.target.value);
+                      setItemText(index, e.target.value);
                     }}
                   />
                 </span>
@@ -361,7 +530,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                         setEditDocItemIndex(index);
                       } else {
                         setEditDocItemIndex(-999);
-                        setTempItemText("");
+                        setItemText(index, null);
                       }
                     }}
                   >
@@ -371,6 +540,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                     closeWhenClicked={true}
                     btnText="Style"
                     btnClassNames="btn btn-ghost "
+                    menuClassNames="-translate-x-16"
                   >
                     <div className="flex flex-col gap-2">
                       {docItemStyles.map((style, index2) => (
@@ -386,7 +556,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                           } !border-opacity-75 backdrop-blur-md`}
                           style={{ width: "100%" }}
                           onClick={() => {
-                            setItemStyle(index, style.color);
+                            setItemStyle(index, style.color, item.uid);
                           }}
                         >
                           {style.text}
@@ -394,6 +564,8 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                       ))}
                     </div>
                   </ItsDropdown>
+
+                  {/** Language Selection */}
                   {item.style === "code" && (
                     <ItsDropdown btnText="Lang" btnClassNames="btn btn-ghost ">
                       <div className="flex flex-col gap-2">
@@ -415,7 +587,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
             </div>
           </div>
         ))}
-      {!moveMode && !editMode && (
+      {!moveMode && !editMode && addMode && (
         <AddDocItemForm
           formData={formData}
           setFormData={setFormData}

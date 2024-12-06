@@ -4,9 +4,9 @@ import axios from "axios";
 
 interface UserState {
   dbUser: User | null;
-  loadingUser: boolean;
   fetchUser: (userId: string) => Promise<void>;
   refetchUser: () => Promise<void>;
+  loadingUser: boolean;
   setDbUser: (user: User | null) => void;
 }
 

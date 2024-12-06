@@ -110,7 +110,9 @@
 }
 
 .btn-nohover {
-  @apply hover:bg-opacity-20
+  @apply 
+   hover:cursor-default
+   hover:bg-opacity-20
     dark:hover:bg-opacity-20;
 }
 

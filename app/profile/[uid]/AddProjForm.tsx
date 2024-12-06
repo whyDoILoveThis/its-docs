@@ -3,7 +3,6 @@ import ItsFileInput from "@/components/ItsFileInput";
 import LoaderSpinner from "@/components/LoaderSpinner";
 import { useUserStore } from "@/hooks/useUserStore";
 import { fbUploadImage } from "@/lib/firebaseStorage";
-import itsDateStringNames from "@/lib/itsDateStringNames";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { v4 } from "uuid";
@@ -107,7 +106,7 @@ const AddProjForm = ({ refetchProjects }: Props) => {
         >
           <div className="flex flex-col items-center">
             <label className="place-self-start font-bold" htmlFor="file">
-              Logo
+              Logo &#40;optional&#41;
             </label>
             <ItsFileInput setImage={setImage} setImageUrl={setImageUrl} />
             {imageUrl && (
