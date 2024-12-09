@@ -11,6 +11,29 @@ interface Props {
 }
 const Projects = ({ projects, refetchProjects }: Props) => {
   const [addingProj, setAddingProj] = useState(false);
+  //const [localProjects, setLocalProjects] = useState<Project[]>(projects || []);
+
+  // // Move item up locally
+  // const moveItemUp = (index: number) => {
+  //   if (index === 0) return; // Can't move the first item up
+  //   const updatedItems = [...localProjects];
+  //   [updatedItems[index - 1], updatedItems[index]] = [
+  //     updatedItems[index],
+  //     updatedItems[index - 1],
+  //   ];
+  //   setLocalProjects(updatedItems);
+  // };
+
+  // // Move item down locally
+  // const moveItemDown = (index: number) => {
+  //   if (index === localProjects.length - 1) return; // Can't move the last item down
+  //   const updatedItems = [...localProjects];
+  //   [updatedItems[index], updatedItems[index + 1]] = [
+  //     updatedItems[index + 1],
+  //     updatedItems[index],
+  //   ];
+  //   setLocalProjects(updatedItems);
+  // };
 
   return (
     <article className="flex flex-col items-center gap-2">
@@ -20,7 +43,7 @@ const Projects = ({ projects, refetchProjects }: Props) => {
           projects.map((proj, index) => (
             <Link
               href={`/project/${proj.uid}`}
-              className="flex items-center gap-1 input w-fit"
+              className="btn btn-w-icon btn-outline"
               key={index}
             >
               {proj.logoUrl && (

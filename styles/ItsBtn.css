@@ -120,6 +120,8 @@
   --btn-size: 35px;
   @apply w-[var(--btn-size)]
     h-[var(--btn-size)] 
+    min-w-[var(--btn-size)]
+    min-h-[var(--btn-size)] 
     max-w-[var(--btn-size)]
     max-h-[var(--btn-size)] 
     rounded-full

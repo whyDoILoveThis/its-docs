@@ -1,7 +1,7 @@
 "use client";
 import { useUserStore } from "@/hooks/useUserStore";
 import React, { useEffect, useState } from "react";
-import Projects from "./Projects";
+import Projects from "@/components/Profile/Projects";
 import axios from "axios";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 

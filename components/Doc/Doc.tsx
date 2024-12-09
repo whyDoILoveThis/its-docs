@@ -9,6 +9,7 @@ import docItemStyles from "./docItemStyles";
 import axios from "axios";
 import { useLocalDocItemsStore } from "@/hooks/useLocalDocItemsStore";
 import EyeIcon from "@/components/icons/EyeIcon";
+import TrashIcon from "@/components/icons/TrashIcon";
 
 interface Props {
   doc: Doc;
@@ -266,7 +267,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                       return (
                         <div
                           key={index}
-                          className="flex flex-col items-center bg-black p-2 bg-opacity-70 rounded-md mt-1.5"
+                          className="flex flex-col items-center border p-2 rounded-md mt-1.5"
                         >
                           {item.style !== "code" &&
                           editDocItemIndex !== index ? (
@@ -411,7 +412,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
           {loading ? <LoaderSpinSmall /> : "Save Changes"}
         </button>
       )}
-      {editMode && (
+      {editMode && doc.docItems !== localDocItems && (
         <button
           className="btn btn-green fixed bottom-2 backdrop-blur-md place-self-end"
           onClick={saveUpdatedDocItems}
@@ -464,7 +465,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                     lang={codeLang}
                   />
                   <textarea
-                    className="input"
+                    className="input w-full"
                     defaultValue={item.text}
                     autoFocus
                     onChange={(e) => {
@@ -477,7 +478,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                 editDocItemIndex === index && (
                   <input
                     type="text"
-                    defaultValue={item.text}
+                    defaultValue={tempItemText[index] || item.text}
                     autoFocus
                     onChange={(e) => {
                       setItemText(index, e.target.value);
@@ -521,67 +522,84 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
               )}
               {/* Edit item options */}
               {editMode && selectedDocIndex === index && (
-                <div className="flex rounded-t-none pt-4 -translate-y-1 border-t-0 gap-2 p-2 w-full border rounded-lg">
-                  <h2 className="w-full font-bold">Edit</h2>
-                  <button
-                    className="btn btn-ghost text-nowrap"
-                    onClick={() => {
-                      if (editDocItemIndex !== index) {
-                        setEditDocItemIndex(index);
-                      } else {
-                        setEditDocItemIndex(-999);
-                        setItemText(index, null);
-                      }
-                    }}
-                  >
-                    {editDocItemIndex !== index ? "Text" : "cancel"}
-                  </button>
-                  <ItsDropdown
-                    closeWhenClicked={true}
-                    btnText="Style"
-                    btnClassNames="btn btn-ghost "
-                    menuClassNames="-translate-x-16"
-                  >
-                    <div className="flex flex-col gap-2">
-                      {docItemStyles.map((style, index2) => (
-                        <li
-                          key={index2}
-                          className={` btn btn-xs btn-squish ${
-                            style.text !== "Section" &&
-                            style.text !== "Code" &&
-                            style.color
-                          }  ${
-                            style.text === "Code" &&
-                            "!border-purple-500 !text-purple-200"
-                          } !border-opacity-75 backdrop-blur-md`}
-                          style={{ width: "100%" }}
-                          onClick={() => {
-                            setItemStyle(index, style.color, item.uid);
-                          }}
-                        >
-                          {style.text}
-                        </li>
-                      ))}
-                    </div>
-                  </ItsDropdown>
-
-                  {/** Language Selection */}
-                  {item.style === "code" && (
-                    <ItsDropdown btnText="Lang" btnClassNames="btn btn-ghost ">
+                <div className="flex justify-between rounded-t-none pt-4 -translate-y-1 border-t-0 gap-2 p-2 w-full border rounded-lg">
+                  <div className="flex items-center gap-1">
+                    <h2 className="w-full font-bold">Edit</h2>
+                    <button
+                      onClick={() => {
+                        const updatedItems = [...localDocItems];
+                        updatedItems.splice(index, 1); // Remove the item at the current index
+                        setLocalDocItems(updatedItems);
+                      }}
+                      className="btn btn-round btn-ghost btn-red"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <button
+                      className="btn btn-ghost text-nowrap"
+                      onClick={() => {
+                        if (editDocItemIndex !== index) {
+                          setEditDocItemIndex(index);
+                        } else {
+                          setEditDocItemIndex(-999);
+                          setItemText(index, null);
+                        }
+                      }}
+                    >
+                      {editDocItemIndex !== index ? "Text" : "cancel"}
+                    </button>
+                    <ItsDropdown
+                      closeWhenClicked={true}
+                      btnText="Style"
+                      btnClassNames="btn btn-ghost "
+                      menuClassNames="-translate-x-16"
+                    >
                       <div className="flex flex-col gap-2">
-                        <li style={{ width: "100%" }}>
-                          <input
-                            type="text"
-                            className="input"
-                            value={codeLang}
-                            onChange={(e) => {
-                              setCodeLang(e.target.value);
+                        {docItemStyles.map((style, index2) => (
+                          <li
+                            key={index2}
+                            className={` btn btn-xs btn-squish ${
+                              style.text !== "Section" &&
+                              style.text !== "Code" &&
+                              style.color
+                            }  ${
+                              style.text === "Code" &&
+                              "!border-purple-500 !text-purple-200"
+                            } !border-opacity-75 backdrop-blur-md`}
+                            style={{ width: "100%" }}
+                            onClick={() => {
+                              setItemStyle(index, style.color, item.uid);
                             }}
-                          />
-                        </li>
+                          >
+                            {style.text}
+                          </li>
+                        ))}
                       </div>
                     </ItsDropdown>
-                  )}
+                    {/** Language Selection */}
+                    {item.style === "code" && (
+                      <ItsDropdown
+                        btnText="Lang"
+                        btnClassNames="btn btn-ghost "
+                        menuClassNames="-translate-x-44"
+                      >
+                        <div className="flex flex-col gap-2">
+                          <li style={{ width: "100%" }}>
+                            <input
+                              type="text"
+                              className="input"
+                              value={codeLang}
+                              onChange={(e) => {
+                                setCodeLang(e.target.value);
+                              }}
+                            />
+                          </li>
+                        </div>
+                      </ItsDropdown>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

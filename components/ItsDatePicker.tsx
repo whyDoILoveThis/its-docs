@@ -4,16 +4,23 @@ import CalendarIcon from "./icons/CalendarIcon";
 interface DatePickerProps {
   useMonthNames?: boolean; // Prop for using month names
   onDateChange?: (date: Date) => void; // Callback to pass the date back to the parent
+  defaultDate?: Date;
 }
 
 export default function CustomDatePicker({
   useMonthNames = false,
   onDateChange,
+  defaultDate,
 }: DatePickerProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  useEffect(() => {
+    defaultDate && setSelectedDate(new Date(defaultDate));
+    defaultDate && onDateChange && onDateChange(new Date(defaultDate));
+  }, []);
 
   // Month options
   const monthOptions = useMonthNames
@@ -103,11 +110,11 @@ export default function CustomDatePicker({
   }, []);
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={dropdownRef} className="relative select-none">
       {/* Input Field */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="w-[227px] flex items-center gap-1 p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-transparent text-slate-900 dark:text-slate-100 focus:outline-none cursor-pointer"
+        className="w-fit flex items-center gap-1 p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-transparent text-slate-900 dark:text-slate-100 focus:outline-none cursor-pointer"
       >
         <CalendarIcon />
         {selectedDate.toDateString()}
@@ -121,15 +128,23 @@ export default function CustomDatePicker({
             <select
               className="cursor-pointer w-1/2 p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-zinc-800 text-slate-900 dark:text-slate-100"
               value={selectedDate.getMonth()}
-              onChange={(e) =>
+              onChange={(e) => {
                 setSelectedDate(
                   new Date(
                     selectedDate.getFullYear(),
                     parseInt(e.target.value),
                     selectedDate.getDate()
                   )
-                )
-              }
+                );
+                onDateChange &&
+                  onDateChange(
+                    new Date(
+                      selectedDate.getFullYear(),
+                      parseInt(e.target.value),
+                      selectedDate.getDate()
+                    )
+                  );
+              }}
             >
               {monthOptions.map((month, index) => (
                 <option key={month} value={index}>
@@ -141,15 +156,23 @@ export default function CustomDatePicker({
             <select
               className="cursor-pointer w-1/2 p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-zinc-800 text-slate-900 dark:text-slate-100"
               value={selectedDate.getFullYear()}
-              onChange={(e) =>
+              onChange={(e) => {
                 setSelectedDate(
                   new Date(
                     parseInt(e.target.value),
                     selectedDate.getMonth(),
                     selectedDate.getDate()
                   )
-                )
-              }
+                );
+                onDateChange &&
+                  onDateChange(
+                    new Date(
+                      parseInt(e.target.value),
+                      selectedDate.getMonth(),
+                      selectedDate.getDate()
+                    )
+                  );
+              }}
             >
               {Array.from(
                 { length: 101 },

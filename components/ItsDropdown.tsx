@@ -44,7 +44,7 @@ const ItsDropdown = ({
     };
   }, []);
   return (
-    <article className="relative flex justify-center items-center">
+    <article className="relative flex justify-center items-center zz-top">
       <div>
         <button
           type="button"

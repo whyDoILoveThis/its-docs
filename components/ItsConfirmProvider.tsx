@@ -41,7 +41,7 @@ export const ItsConfirmProvider: React.FC<{ children: ReactNode }> = ({
     <ConfirmContext.Provider value={{ ItsConfirm }}>
       {children}
       {message && (
-        <div className="zz-top fixed left-0 right-0 top-0 bottom-0 flex items-center justify-center bg-black bg-opacity-20 backdrop-blur-md">
+        <div className="p-4 zz-top fixed left-0 right-0 top-0 bottom-0 flex items-center justify-center bg-black bg-opacity-20 backdrop-blur-md">
           <div className="bg-white bg-opacity-20 p-4 rounded-md shadow-md">
             <p className="text-lg text-slate-300 mb-4">{message}</p>
             <div className="flex justify-center gap-4">
