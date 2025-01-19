@@ -1,18 +1,21 @@
 "use client";
-import { useUserStore } from "@/hooks/useUserStore";
 import React, { useEffect, useState } from "react";
 import Projects from "@/components/Profile/Projects";
 import axios from "axios";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
+import UpdateProfileForm from "@/components/Profile/UpdateProfileForm";
+import ItsDropdown from "@/components/ItsDropdown";
+import EditIcon from "@/components/icons/EditIcon";
 
 interface Props {
   userUid: string;
 }
 const ProfilePage = ({ userUid }: Props) => {
   const [profileUser, setProfileUser] = useState<User | null>(null);
-  const [userExists, setUserExists] = useState(false);
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   const checkUser = async (uid: string) => {
     try {
@@ -22,9 +25,8 @@ const ProfilePage = ({ userUid }: Props) => {
 
       if (data.user) {
         setProfileUser(data.user);
-        setUserExists(true);
       } else {
-        setUserExists(false);
+        setProfileUser(null);
       }
       setLoading(false);
     } catch (error) {
@@ -49,8 +51,8 @@ const ProfilePage = ({ userUid }: Props) => {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching projects:", error);
-      throw error;
       setLoading(false);
+      throw error;
     }
   };
 
@@ -58,6 +60,18 @@ const ProfilePage = ({ userUid }: Props) => {
     setLoading(true);
     await fetchProjectsByCreator(userUid);
     setLoading(false);
+  };
+
+  const handleEditClick = (field: string) => {
+    setEditingField(field);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingField(null);
+  };
+
+  const refetchUser = async () => {
+    await checkUser(userUid);
   };
 
   useEffect(() => {
@@ -68,6 +82,12 @@ const ProfilePage = ({ userUid }: Props) => {
     g();
   }, [userUid]);
 
+  useEffect(() => {
+    if (!showSettings) {
+      setEditingField(null);
+    }
+  }, [showSettings]);
+
   if (loading)
     return (
       <div className="w-full flex justify-center">
@@ -76,13 +96,81 @@ const ProfilePage = ({ userUid }: Props) => {
     );
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col mt-6 items-center">
+      <div className="w-fit fixed top-16 right-4 place-self-end">
+        <ItsDropdown
+          closeWhenClicked={true}
+          btnText="Settings"
+          btnClassNames="btn btn-outline btn-xs btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
+          menuClassNames="-translate-x-24"
+        >
+          <li
+            onClick={() => {
+              if (!showSettings) {
+                setShowSettings(!showSettings);
+              }
+            }}
+            className={`btn btn-ghost text-nowrap ${showSettings && "blur-sm"}`}
+            style={{ width: "100%" }}
+          >
+            Edit Mode
+          </li>
+          {showSettings && (
+            <li
+              className={`btn btn-ghost text-nowrap`}
+              style={{ width: "100%" }}
+              onClick={() => {
+                setShowSettings(false);
+              }}
+            >
+              Exit Edit Mode
+            </li>
+          )}
+        </ItsDropdown>
+      </div>
       <span className="mb-8 max-w-[280px]">
-        <h1 className="font-bold text-center">{profileUser?.fullName}</h1>
-        <p className="text-slate-800 dark:text-slate-300">
-          Been building web apps since the creator of php was shittin yellow
-          son. ill tell ya what ya need to know.
+        <h1 className="font-bold text-center text-gray-900 dark:text-gray-100">
+          {profileUser?.fullName}
+          {showSettings && (
+            <button
+              onClick={() => handleEditClick("fullName")}
+              className="ml-2 btn btn-xs"
+            >
+              <EditIcon />
+            </button>
+          )}
+        </h1>
+        {editingField === "fullName" && (
+          <UpdateProfileForm
+            field="fullName"
+            value={profileUser?.fullName || ""}
+            onCancel={handleCancelEdit}
+            onSave={refetchUser}
+          />
+        )}
+        <p
+          className={`text-slate-800 dark:text-slate-300 ${
+            editingField && "mt-4"
+          }`}
+        >
+          {profileUser?.bio}
+          {showSettings && (
+            <button
+              onClick={() => handleEditClick("bio")}
+              className="ml-2 btn btn-xs"
+            >
+              <EditIcon />
+            </button>
+          )}
         </p>
+        {editingField === "bio" && (
+          <UpdateProfileForm
+            field="bio"
+            value={profileUser?.bio || ""}
+            onCancel={handleCancelEdit}
+            onSave={refetchUser}
+          />
+        )}
       </span>
       <Projects projects={projects} refetchProjects={refetchProjects} />
     </div>

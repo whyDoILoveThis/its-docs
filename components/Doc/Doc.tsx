@@ -10,19 +10,22 @@ import axios from "axios";
 import { useLocalDocItemsStore } from "@/hooks/useLocalDocItemsStore";
 import EyeIcon from "@/components/icons/EyeIcon";
 import TrashIcon from "@/components/icons/TrashIcon";
+import { useAuth } from "@clerk/nextjs";
 
 interface Props {
   doc: Doc;
   refetchProjectForDocs: () => void;
   projUid: string;
+  theProject: Project;
 }
 
-const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
+const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
   const [formData, setFormData] = useState<DocItem>({
     uid: v4(),
     style: "",
     text: "",
   });
+  const { userId } = useAuth();
   const [moveMode, setMoveMode] = useState(false); // Toggle move item mode
   const [editMode, setEditMode] = useState(false);
   const [addMode, setAddMode] = useState(false);
@@ -38,9 +41,10 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [showTheUnsavedChanges, setShowTheUnsavedChanges] = useState(false);
   const [unsavedItemUids, setUnsavedItemUids] = useState<(string | null)[]>([]);
+  const [localDoc, setLocalDoc] = useState<Doc>(doc);
 
   useEffect(() => {
-    setLocalDocItems(doc.docItems);
+    doc.docItems && setLocalDocItems(doc.docItems);
     console.log("setLocalDocItems");
   }, [doc.docItems, setLocalDocItems]);
 
@@ -109,6 +113,30 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
 
   console.log(localDocItems, tempItemText);
 
+  const updateDocument = async (
+    projUid: string,
+    docId: string,
+    updatedDoc: Doc
+  ) => {
+    try {
+      const response = await axios.put("/api/updateDoc", {
+        projUid,
+        docId,
+        updatedDoc,
+      });
+
+      console.log("✅ Document updated successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("❌ Axios error:", error.response?.data || error.message);
+      } else {
+        console.error("❌ Unexpected error:", error);
+      }
+      throw error;
+    }
+  };
+
   // Save updated items to the database
   const saveUpdatedDocItems = async () => {
     const theItems = localDocItems;
@@ -122,6 +150,9 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
 
     try {
       setLoading(true);
+
+      await updateDocument(projUid, doc.uid, localDoc);
+
       const response = await fetch("/api/updateDocItems", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -202,12 +233,13 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
       if (editMode) {
         setEditMode(false);
         setTempItemText([]);
+        setLocalDoc(doc);
         if (tempItemStyles.length > 0) {
           setUnsavedChanges(true);
         }
       }
 
-      setLocalDocItems(doc.docItems);
+      doc.docItems && setLocalDocItems(doc.docItems);
     }
   };
 
@@ -229,7 +261,8 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
 
   return (
     <div className="mb-24 flex flex-col items-center gap-2 w-full">
-      {tempItemStyles.length > 0 && (
+      {/** Cover for back btn on ProjectPage */}
+      {(tempItemStyles.length > 0 || editMode) && (
         <div className="w-[45px] rounded-sm overflow-hidden bg-black bg-opacity-20 h-[25px] backdrop-blur-sm fixed place-self-start" />
       )}{" "}
       {tempItemStyles.length > 0 &&
@@ -336,72 +369,114 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
           </div>
         )}
       {/** SETTINGS BTN */}
-      <div className="w-fit fixed place-self-end">
-        <ItsDropdown
-          closeWhenClicked={true}
-          btnText="Settings"
-          btnClassNames=" btn btn-outline btn-xs btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
-          menuClassNames="-translate-x-24"
-        >
-          <li
-            onClick={() => {
-              if (editMode) {
-                handleExitMode();
-              } else if (!moveMode) {
-                setEditMode(true);
-              }
-            }}
-            className={`btn btn-ghost text-nowrap ${moveMode && "blur-sm"}`}
-            style={{ width: "100%" }}
+      {userId && userId === theProject.creatorUid && (
+        <div className="w-fit fixed place-self-end">
+          <ItsDropdown
+            closeWhenClicked={true}
+            btnText="Settings"
+            btnClassNames=" btn btn-outline btn-xs btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
+            menuClassNames="-translate-x-24"
           >
-            {editMode ? "Exit Edit Mode" : "Edit Mode"}
-          </li>
-          <li
-            onClick={() => {
-              if (moveMode) {
-                handleExitMode();
-              } else if (!editMode) {
-                setMoveMode(true);
-              }
-            }}
-            className={`btn btn-ghost text-nowrap ${editMode && "blur-sm"}`}
-            style={{ width: "100%" }}
-          >
-            {moveMode ? "Exit Move Mode" : "Move Mode"}
-          </li>
-          <li
-            onClick={() => handleToggleAddMode(true)}
-            className={`btn btn-ghost text-nowrap ${
-              (editMode && "blur-sm") || (moveMode && "blur-sm")
-            }`}
-            style={{ width: "100%" }}
-          >
-            Add Mode
-          </li>
-          <li
-            onClick={() => handleToggleAddMode(false)}
-            className={`btn btn-ghost text-nowrap ${
-              (editMode && "blur-sm") || (moveMode && "blur-sm")
-            }`}
-            style={{ width: "100%" }}
-          >
-            Read Only Mode
-          </li>
-          <li
-            onClick={() => handleDeleteDoc()}
-            className={`btn btn-ghost btn-red ${
-              (editMode && "blur-sm") || (moveMode && "blur-sm")
-            }`}
-            style={{ width: "100%" }}
-          >
-            Delete
-          </li>
-        </ItsDropdown>
-      </div>
+            <h3 className="w-full font-bold">Modes</h3>
+            <li
+              onClick={() => {
+                if (editMode) {
+                  handleExitMode();
+                } else if (!moveMode) {
+                  setEditMode(true);
+                }
+              }}
+              className={`btn btn-ghost text-nowrap ${moveMode && "blur-sm"}`}
+              style={{ width: "100%" }}
+            >
+              {editMode ? "Exit Edit" : "Edit"}
+            </li>
+            <li
+              onClick={() => {
+                if (moveMode) {
+                  handleExitMode();
+                } else if (!editMode) {
+                  setMoveMode(true);
+                }
+              }}
+              className={`btn btn-ghost text-nowrap ${editMode && "blur-sm"}`}
+              style={{ width: "100%" }}
+            >
+              {moveMode ? "Exit Move" : "Move"}
+            </li>
+            <li
+              onClick={() => handleToggleAddMode(true)}
+              className={`btn btn-ghost text-nowrap ${
+                (editMode && "blur-sm") || (moveMode && "blur-sm")
+              }`}
+              style={{ width: "100%" }}
+            >
+              Add
+            </li>
+            <li
+              onClick={() => handleToggleAddMode(false)}
+              className={`btn btn-ghost text-nowrap ${
+                (editMode && "blur-sm") || (moveMode && "blur-sm")
+              }`}
+              style={{ width: "100%" }}
+            >
+              Read Only
+            </li>
+            <li
+              onClick={() => handleDeleteDoc()}
+              className={`btn btn-ghost btn-red ${
+                (editMode && "blur-sm") || (moveMode && "blur-sm")
+              }`}
+              style={{ width: "100%" }}
+            >
+              Delete
+            </li>
+          </ItsDropdown>
+        </div>
+      )}
       {/** HEAADING */}
-      <h1 className="font-bold">{doc.title}</h1>
-      <p className="mb-4">{doc.tagline && doc.tagline}</p>
-      <p>{doc.desc && doc.desc}</p>
+      <span className="flex flex-col gap-2">
+        <h1 className="font-bold mt-6">
+          {localDoc.title || (localDoc.title !== "" && doc.title)}
+        </h1>
+        {editMode && (
+          <input
+            defaultValue={doc.title}
+            onChange={(e) => {
+              setLocalDoc({ ...localDoc, title: e.target.value });
+            }}
+            type="text"
+            className="input"
+          />
+        )}
+      </span>
+      <span className="flex flex-col gap-2">
+        <p className={`${!editMode && "mb-4"}`}>
+          {localDoc.tagline || (localDoc.tagline !== "" && doc.tagline)}
+        </p>
+        {editMode && (
+          <input
+            defaultValue={doc.tagline}
+            onChange={(e) => {
+              setLocalDoc({ ...localDoc, tagline: e.target.value });
+            }}
+            type="text"
+            className="input"
+          />
+        )}
+      </span>
+      <span className="flex flex-col gap-2 max-w-[400px]">
+        <p>{localDoc.desc || (localDoc.desc !== "" && doc.desc && doc.desc)}</p>
+        {editMode && (
+          <textarea
+            defaultValue={doc.desc}
+            onChange={(e) => {
+              setLocalDoc({ ...localDoc, desc: e.target.value });
+            }}
+            className="input min-h-[130px]"
+          />
+        )}
+      </span>
       {/** SAVE BTN */}
       {moveMode && (
         <button
@@ -412,7 +487,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
           {loading ? <LoaderSpinSmall /> : "Save Changes"}
         </button>
       )}
-      {editMode && doc.docItems !== localDocItems && (
+      {(editMode || doc !== localDoc) && (
         <button
           className="btn btn-green fixed bottom-2 backdrop-blur-md place-self-end"
           onClick={saveUpdatedDocItems}
@@ -466,7 +541,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
                   />
                   <textarea
                     className="input w-full"
-                    defaultValue={item.text}
+                    defaultValue={tempItemText[index] || item.text}
                     autoFocus
                     onChange={(e) => {
                       setItemText(index, e.target.value);
@@ -605,7 +680,11 @@ const Doc = ({ doc, refetchProjectForDocs, projUid }: Props) => {
             </div>
           </div>
         ))}
-      {!moveMode && !editMode && addMode && (
+      {((!moveMode && !editMode && addMode) ||
+        (doc.docItems &&
+          doc.docItems?.length <= 0 &&
+          !editMode &&
+          !moveMode)) && (
         <AddDocItemForm
           formData={formData}
           setFormData={setFormData}

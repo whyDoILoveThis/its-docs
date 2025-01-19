@@ -9,60 +9,52 @@ interface Props {
   projects: Project[] | null;
   refetchProjects: () => void;
 }
+
 const Projects = ({ projects, refetchProjects }: Props) => {
   const [addingProj, setAddingProj] = useState(false);
-  //const [localProjects, setLocalProjects] = useState<Project[]>(projects || []);
-
-  // // Move item up locally
-  // const moveItemUp = (index: number) => {
-  //   if (index === 0) return; // Can't move the first item up
-  //   const updatedItems = [...localProjects];
-  //   [updatedItems[index - 1], updatedItems[index]] = [
-  //     updatedItems[index],
-  //     updatedItems[index - 1],
-  //   ];
-  //   setLocalProjects(updatedItems);
-  // };
-
-  // // Move item down locally
-  // const moveItemDown = (index: number) => {
-  //   if (index === localProjects.length - 1) return; // Can't move the last item down
-  //   const updatedItems = [...localProjects];
-  //   [updatedItems[index], updatedItems[index + 1]] = [
-  //     updatedItems[index + 1],
-  //     updatedItems[index],
-  //   ];
-  //   setLocalProjects(updatedItems);
-  // };
 
   return (
-    <article className="flex flex-col items-center gap-2">
-      <h2 className="border-b border-slate-700 mb-2">Projects</h2>
-      <div className="flex flex-col gap-2">
-        {projects &&
+    <article className="flex flex-col items-center gap-6 p-6 shadow-lg rounded-lg w-full max-w-3xl">
+      <h2 className="text-3xl font-bold border-b border-slate-700 mb-6 w-full text-center text-gray-900 dark:text-gray-100">
+        Projects
+      </h2>
+      <div className="flex flex-col gap-6 w-full">
+        {projects && projects.length > 0 ? (
           projects.map((proj, index) => (
-            <Link
-              href={`/project/${proj.uid}`}
-              className="btn btn-w-icon btn-outline"
-              key={index}
-            >
-              {proj.logoUrl && (
-                <Image src={proj.logoUrl} alt={""} width={25} height={25} />
-              )}
-              <p>{proj.title}</p>
-            </Link>
-          ))}
+            <div key={index} className="flex flex-col gap-2">
+              <Link
+                href={`/project/${proj.uid}`}
+                className="flex items-center justify-between p-4 bg-black bg-opacity-10 dark:bg-white dark:bg-opacity-10 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:bg-opacity-5 dark:hover:bg-opacity-5"
+              >
+                <div className="flex items-center gap-4">
+                  {proj.logoUrl && (
+                    <Image
+                      src={proj.logoUrl}
+                      alt={proj.title}
+                      width={50}
+                      height={50}
+                      className="rounded-full"
+                    />
+                  )}
+                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    {proj.title}
+                  </p>
+                </div>
+              </Link>
+            </div>
+          ))
+        ) : (
+          <p className="text-lg text-gray-500 dark:text-gray-400">
+            No projects created yet
+          </p>
+        )}
       </div>
-      <p className="text-sm">
-        {projects && projects.length <= 0 && "No projects created yet"}
-      </p>
       <button
-        onClick={() => {
-          setAddingProj(!addingProj);
-        }}
-        className="btn btn-round text-2xl"
+        onClick={() => setAddingProj(!addingProj)}
+        className="btn btn-primary flex items-center gap-2"
       >
         {addingProj ? <CloseIcon /> : <PlusIcon />}
+        {addingProj ? "Close" : "Add Project"}
       </button>
       {addingProj && <AddProjForm refetchProjects={refetchProjects} />}
     </article>

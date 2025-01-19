@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import itsDateString from "@/lib/itsDateString";
 import ItsDatePicker from "../ItsDatePicker";
-import itsDateStringNames from "@/lib/itsDateStringNames";
 import LoaderSpinSmall from "../LoaderSpinSmall";
 
 interface Props {
   refetchProject: () => void;
   formType: string;
   proj: Project;
+  onCancel: () => void;
 }
 
-const UpdateProjectForm = ({ proj, refetchProject, formType }: Props) => {
+const UpdateProjectForm = ({
+  proj,
+  refetchProject,
+  formType,
+  onCancel,
+}: Props) => {
   const [formData, setFormData] = useState({
     birth: proj.birth || new Date(),
     title: proj.title || "",
@@ -20,12 +24,11 @@ const UpdateProjectForm = ({ proj, refetchProject, formType }: Props) => {
   });
 
   const [message, setMessage] = useState<string | null>(null);
-  const [theDate, setTheDate] = useState<Date>();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    theDate && setFormData((prev) => ({ ...prev, birth: theDate }));
-  }, [theDate]);
+    setFormData((prev) => ({ ...prev, birth: proj.birth }));
+  }, [proj.birth]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -41,21 +44,19 @@ const UpdateProjectForm = ({ proj, refetchProject, formType }: Props) => {
     e.preventDefault();
     setLoading(true);
 
-    // Prepare the payload
-    const updates = Object.entries(formData)
-      .filter(([_, value]) => {
-        // Keep valid Dates and non-empty strings
-        if (value instanceof Date) return true;
-        if (typeof value === "string" && value.trim() !== "") return true;
-        return false;
-      })
-      .reduce((acc, [key, value]) => {
-        acc[key] = value; // Rebuild the object
-        return acc;
-      }, {} as Record<string, unknown>);
+    const updates = Object.entries(formData).reduce((acc, [key, value]) => {
+      if (
+        value instanceof Date ||
+        (typeof value === "string" && value.trim() !== "")
+      ) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, unknown>);
 
     if (Object.keys(updates).length === 0) {
       setMessage("Please fill out at least one field.");
+      setLoading(false);
       return;
     }
 
@@ -68,6 +69,7 @@ const UpdateProjectForm = ({ proj, refetchProject, formType }: Props) => {
       setMessage(response.data.message || "Project updated successfully!");
       setLoading(false);
       refetchProject();
+      onCancel();
     } catch (error) {
       console.error("Error updating project:", error);
       setMessage("Failed to update project. Please try again.");
@@ -85,51 +87,56 @@ const UpdateProjectForm = ({ proj, refetchProject, formType }: Props) => {
             placeholder="Title"
             value={formData.title}
             onChange={handleChange}
-            className="input"
+            className="input w-full"
           />
         );
-        break;
       case "desc":
         return (
           <textarea
-            className="input w-full"
-            id="desc"
+            className="input w-full !min-h-400px mt-1"
             name="desc"
-            value={formData.desc || ""}
-            onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
+            value={formData.desc}
+            onChange={handleChange}
           />
         );
-        break;
       case "logoUrl":
         return (
           <input
-            className="input w-full"
             type="text"
-            id="logoUrl"
             name="logoUrl"
-            value={formData.logoUrl || ""}
-            onChange={(e) =>
-              setFormData({ ...formData, logoUrl: e.target.value })
+            value={formData.logoUrl}
+            onChange={handleChange}
+            className="input w-full"
+          />
+        );
+      case "birth":
+        return (
+          <ItsDatePicker
+            defaultDate={proj.birth}
+            onDateChange={(date) =>
+              setFormData((prev) => ({ ...prev, birth: date }))
             }
           />
         );
-        break;
-      case "birth":
-        return (
-          <ItsDatePicker defaultDate={proj.birth} onDateChange={setTheDate} />
-        );
-        break;
+      default:
+        return null;
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-2 mb-4 items-end"
+    >
       {renderForm()}
-
-      <button type="submit" className="btn btn-green place-self-end">
-        {loading ? <LoaderSpinSmall /> : "Update"}
-      </button>
-
+      <div className="flex gap-2">
+        <button type="submit" className="btn btn-green">
+          {loading ? <LoaderSpinSmall /> : "Update"}
+        </button>
+        <button type="button" className="btn btn-red" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
       {message && <p className="text-sm text-center">{message}</p>}
     </form>
   );

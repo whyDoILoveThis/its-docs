@@ -1,9 +1,7 @@
 "use client";
-import { useUserStore } from "@/hooks/useUserStore";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import DeleteProjectBtn from "@/components/Project/DeleteProjectBtn";
-import LoaderSpinner from "@/components/LoaderSpinner";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import ItsDropdown from "@/components/ItsDropdown";
 import CloseIcon from "@/components/icons/CloseIcon";
@@ -19,6 +17,7 @@ import { useAuth } from "@clerk/nextjs";
 interface Props {
   projUid: string;
 }
+
 const ProjectPage = ({ projUid }: Props) => {
   const { userId } = useAuth();
   const [theProject, setTheProject] = useState<Project | null>(null);
@@ -28,17 +27,16 @@ const ProjectPage = ({ projUid }: Props) => {
   const [selectedDoc, setSelectedDoc] = useState<Doc | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [selectedUpdate, setSelectedUpdate] = useState(-999);
-  const [localDocLinks, setLocalDocLinks] = useState<Doc[]>(
-    theProject?.docs || []
-  );
+  const [localDocLinks, setLocalDocLinks] = useState<Doc[]>([]);
 
   useEffect(() => {
-    theProject && theProject.docs && setLocalDocLinks(theProject.docs);
+    if (theProject?.docs) {
+      setLocalDocLinks(theProject.docs);
+    }
   }, [theProject?.docs]);
 
-  // Move item up locally
   const moveItemUp = (index: number) => {
-    if (index === 0) return; // Can't move the first item up
+    if (index === 0) return;
     const updatedItems = [...localDocLinks];
     [updatedItems[index - 1], updatedItems[index]] = [
       updatedItems[index],
@@ -47,9 +45,8 @@ const ProjectPage = ({ projUid }: Props) => {
     setLocalDocLinks(updatedItems);
   };
 
-  // Move item down locally
   const moveItemDown = (index: number) => {
-    if (index === localDocLinks.length - 1) return; // Can't move the last item down
+    if (index === localDocLinks.length - 1) return;
     const updatedItems = [...localDocLinks];
     [updatedItems[index], updatedItems[index + 1]] = [
       updatedItems[index + 1],
@@ -67,7 +64,7 @@ const ProjectPage = ({ projUid }: Props) => {
       });
 
       setTheMessage(response.data.message || "Docs updated successfully!");
-      refetchProject(); // Refresh the project to ensure consistency
+      refetchProject();
       setEditMode(false);
       setLoading(false);
     } catch (error) {
@@ -83,24 +80,21 @@ const ProjectPage = ({ projUid }: Props) => {
       const response = await axios.get(
         `/api/getProjectByUid?projUid=${projUid}`
       );
-      console.log(response.data);
 
       const project = response.data.project;
       const message = response.data.message;
-      console.log(message);
 
-      console.log(project);
       setTheMessage(message);
       setTheProject(project);
-      selectedDoc &&
+      if (selectedDoc) {
         setSelectedDoc(
           project.docs.find((doc: Doc) => doc.uid === selectedDoc.uid)
         );
+      }
       setEditMode(false);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching projects:", error);
-      throw error;
       setLoading(false);
     }
   };
@@ -131,7 +125,6 @@ const ProjectPage = ({ projUid }: Props) => {
     <div className="flex flex-col w-full items-center">
       {selectedDoc === null ? (
         <div className="w-full flex flex-col items-center">
-          {/** Settings btn */}
           {theProject?.creatorUid === userId && (
             <div className="w-fit place-self-end px-2">
               <ItsDropdown
@@ -144,7 +137,9 @@ const ProjectPage = ({ projUid }: Props) => {
                   className="btn btn-ghost !w-full"
                   onClick={() => {
                     setEditMode(!editMode);
-                    editMode && setSelectedUpdate(-999);
+                    if (editMode) {
+                      setSelectedUpdate(-999);
+                    }
                   }}
                 >
                   {editMode ? "Exit Edit" : "Edit"}
@@ -155,17 +150,22 @@ const ProjectPage = ({ projUid }: Props) => {
               </ItsDropdown>
             </div>
           )}
-          {/** Header */}
+          {editMode && localDocLinks !== theProject?.docs && (
+            <button
+              onClick={saveReorderedDocs}
+              className="btn btn-green sticky left-[75%] top-[90%]"
+            >
+              {loading ? <LoaderSpinSmall /> : "Save Order"}
+            </button>
+          )}
           <header className="mb-8 max-w-[280px] flex flex-col items-center">
             <div className="flex flex-col">
-              <span className="flex gap-1">
+              <span className="flex items-center gap-1">
                 <h1 className="font-bold">{theProject?.title}</h1>
                 {editMode && (
                   <button
-                    onClick={() => {
-                      setSelectedUpdate(1);
-                    }}
-                    className="btn btn-ghost btn-round text-3xl"
+                    onClick={() => setSelectedUpdate(1)}
+                    className="ml-2 btn btn-sm"
                   >
                     <EditIcon />
                   </button>
@@ -176,6 +176,7 @@ const ProjectPage = ({ projUid }: Props) => {
                   proj={theProject}
                   refetchProject={refetchProject}
                   formType="title"
+                  onCancel={() => setSelectedUpdate(-999)}
                 />
               )}
             </div>
@@ -187,10 +188,8 @@ const ProjectPage = ({ projUid }: Props) => {
                 </p>
                 {editMode && (
                   <button
-                    onClick={() => {
-                      setSelectedUpdate(2);
-                    }}
-                    className="btn btn-ghost btn-round text-lg"
+                    onClick={() => setSelectedUpdate(2)}
+                    className="ml-2 btn btn-xs"
                   >
                     <EditIcon />
                   </button>
@@ -201,6 +200,7 @@ const ProjectPage = ({ projUid }: Props) => {
                   proj={theProject}
                   refetchProject={refetchProject}
                   formType="birth"
+                  onCancel={() => setSelectedUpdate(-999)}
                 />
               )}
             </div>
@@ -209,10 +209,8 @@ const ProjectPage = ({ projUid }: Props) => {
                 <p>{theProject?.desc}</p>
                 {editMode && (
                   <button
-                    onClick={() => {
-                      setSelectedUpdate(3);
-                    }}
-                    className="btn btn-ghost btn-round text-2xl"
+                    onClick={() => setSelectedUpdate(3)}
+                    className="ml-2 btn btn-xs"
                   >
                     <EditIcon />
                   </button>
@@ -223,26 +221,27 @@ const ProjectPage = ({ projUid }: Props) => {
                   proj={theProject}
                   refetchProject={refetchProject}
                   formType="desc"
+                  onCancel={() => setSelectedUpdate(-999)}
                 />
               )}
             </div>
           </header>
-          {/** Doc List */}
           <ul className="flex flex-col gap-2">
             {localDocLinks &&
               localDocLinks.length > 0 &&
               localDocLinks.map((doc, index) => (
                 <li
                   onClick={() => {
-                    !editMode && setSelectedDoc(doc);
-                    !editMode && window.scrollTo({ top: 0 });
+                    if (!editMode) {
+                      setSelectedDoc(doc);
+                      window.scrollTo({ top: 0 });
+                    }
                   }}
                   key={index}
                 >
                   <DocLink doc={doc} />
-                  {/* Move item arrows */}
                   {editMode && (
-                    <div className="flex rounded-t-none pt-4 -translate-y-1 border-t-0 gap-2 p-2 w-fit border rounded-lg">
+                    <div className="flex rounded-tl-none pt-4 -translate-y-1 gap-2 p-2 w-fit border rounded-lg">
                       <button
                         className="btn btn-round btn-ghost"
                         onClick={() => moveItemUp(index)}
@@ -261,49 +260,38 @@ const ProjectPage = ({ projUid }: Props) => {
                   )}
                 </li>
               ))}
-            {editMode && localDocLinks !== theProject?.docs && (
-              <button
-                onClick={saveReorderedDocs}
-                className="btn btn-green mt-4 place-self-end"
-              >
-                {loading ? <LoaderSpinSmall /> : "Save Order"}
-              </button>
-            )}
           </ul>
-          {/** Add Doc Form */}
-          <button
-            onClick={() => {
-              setAddingDoc(!addingDoc);
-            }}
-            className="btn btn-round text-2xl my-4"
-          >
-            {addingDoc ? <CloseIcon /> : <PlusIcon />}
-          </button>
+          {userId && userId === theProject?.creatorUid && (
+            <button
+              onClick={() => setAddingDoc(!addingDoc)}
+              className="btn btn-round text-2xl my-4"
+            >
+              {addingDoc ? <CloseIcon /> : <PlusIcon />}
+            </button>
+          )}
           {addingDoc && (
             <AddDocForm projUid={projUid} refetchProject={refetchProject} />
           )}
           <p>{theMessage && theMessage}</p>
         </div>
       ) : (
-        <>
-          {/** The actual doc */}
-          <div className="relative w-full flex flex-col px-2 items-center">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedDoc(null);
-              }}
-              className="place-self-start backdrop-blur-md fixed btn btn-outline btn-xs btn-squish"
-            >
-              Back
-            </button>
+        <div className="relative w-full flex flex-col px-2 items-center">
+          <button
+            type="button"
+            onClick={() => setSelectedDoc(null)}
+            className="place-self-start backdrop-blur-md fixed btn btn-outline btn-xs btn-squish"
+          >
+            Back
+          </button>
+          {theProject && (
             <Doc
+              theProject={theProject}
               projUid={projUid}
               refetchProjectForDocs={refetchProjectForDocs}
               doc={selectedDoc}
             />
-          </div>
-        </>
+          )}
+        </div>
       )}
     </div>
   );

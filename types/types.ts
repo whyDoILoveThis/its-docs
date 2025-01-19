@@ -9,6 +9,7 @@ declare global {
         fullName: MaybeString;
         firstName: MaybeString;
         email: MaybeString;
+        bio: MaybeString;
     }
   
     interface Project {
@@ -18,7 +19,7 @@ declare global {
         title: string;
         desc?: string;
         logoUrl?: string;
-        docs: Doc[];
+        docs?: Doc[];
     }
     
     interface Doc {
@@ -26,7 +27,7 @@ declare global {
         title: string;
         tagline?: string;
         desc?: string
-        docItems: DocItem[];
+        docItems?: DocItem[];
     }
   
     interface DocItem {

@@ -8,7 +8,7 @@ import mongoose, { Document, Schema, Model, model } from "mongoose";
       fullName: MaybeString;
       firstName: MaybeString;
       email: MaybeString;
-      projects?: Project[];
+      bio?: MaybeString;
   }
 
 // Main User Schema
@@ -29,6 +29,10 @@ const UserSchema = new Schema<User>({
   email: {
     type: String,
     required: true,
+  },
+  bio: {
+    type: String,
+    required: false,
   },
 });
 
