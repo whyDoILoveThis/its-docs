@@ -10,6 +10,7 @@ import {
   SignInButton,
   useAuth,
   UserButton,
+  useUser,
 } from "@clerk/nextjs";
 import LoaderSpinSmall from "./LoaderSpinSmall";
 import SearchPopover from "./SearchPopover";

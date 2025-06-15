@@ -18,8 +18,8 @@ export default function CustomDatePicker({
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   useEffect(() => {
-    if (defaultDate) setSelectedDate(new Date(defaultDate));
-    if (defaultDate && onDateChange) onDateChange(new Date(defaultDate));
+    defaultDate && setSelectedDate(new Date(defaultDate));
+    defaultDate && onDateChange && onDateChange(new Date(defaultDate));
   }, []);
 
   // Month options
@@ -136,7 +136,7 @@ export default function CustomDatePicker({
                     selectedDate.getDate()
                   )
                 );
-                if (onDateChange)
+                onDateChange &&
                   onDateChange(
                     new Date(
                       selectedDate.getFullYear(),
@@ -164,7 +164,7 @@ export default function CustomDatePicker({
                     selectedDate.getDate()
                   )
                 );
-                if (onDateChange)
+                onDateChange &&
                   onDateChange(
                     new Date(
                       parseInt(e.target.value),

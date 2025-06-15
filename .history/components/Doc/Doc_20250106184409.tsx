@@ -44,7 +44,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
   const [localDoc, setLocalDoc] = useState<Doc>(doc);
 
   useEffect(() => {
-    if (doc.docItems) setLocalDocItems(doc.docItems);
+    doc.docItems && setLocalDocItems(doc.docItems);
     console.log("setLocalDocItems");
   }, [doc.docItems, setLocalDocItems]);
 
@@ -239,7 +239,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
         }
       }
 
-      if (doc.docItems) setLocalDocItems(doc.docItems);
+      doc.docItems && setLocalDocItems(doc.docItems);
     }
   };
 
