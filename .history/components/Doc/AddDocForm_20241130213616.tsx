@@ -77,7 +77,7 @@ const AddDocForm = ({ projUid, refetchProject }: Props) => {
     <div>
       {loading && <LoaderSpinner />}
       {message === "" ? (
-        <form onSubmit={handleAddDoc} className="flex flex-col gap-4 mb-6">
+        <form onSubmit={handleAddDoc} className="flex flex-col gap-4">
           <h2 className="text-center mt-2 font-bold">New Doc</h2>
           {inputData.map((data, index) => (
             <div key={index} className="flex flex-col">

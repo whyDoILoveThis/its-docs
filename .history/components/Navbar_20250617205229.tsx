@@ -49,7 +49,7 @@ const Navbar = () => {
             width={50}
             height={50}
           />
-          <b className="text-2xl">ItsDocs</b>
+          <b className="text-lg">ItsDocs</b>
         </Link>
         <div className="flex items-center gap-2">
           <button
@@ -57,7 +57,7 @@ const Navbar = () => {
             className="btn btn-ghost btn-xs flex gap-1 items-center"
           >
             <span className="3xs:opacity-0 sm:opacity-100">Ctrl + K</span>
-            <span className="3xs:text-[25px] sm:text-[16px]">
+            <span className="3xs:text-lg sm:text-[16px]">
               <SearchIcon />
             </span>
           </button>

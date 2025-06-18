@@ -374,7 +374,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
           <ItsDropdown
             closeWhenClicked={true}
             btnText="Settings"
-            btnClassNames=" btn btn-outline 3xs:text-lg sm:text-sm btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
+            btnClassNames=" btn btn-outline 3xs:text-lg sm:text=sm btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
             menuClassNames="-translate-x-24"
           >
             <h3 className="w-full font-bold">Modes</h3>

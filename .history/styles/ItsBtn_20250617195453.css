@@ -132,7 +132,7 @@
 }
 
 .btn-reg {
-  @apply text-[50px]
+  @apply text-base
     p-1
     px-3;
 }

@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useUserStore } from "@/hooks/useUserStore";
 import LoaderSpinSmall from "./LoaderSpinSmall";
-import DashIcon from "./icons/DashIcon";
 
 export default function Home() {
   const { dbUser, setDbUser } = useUserStore();
@@ -87,7 +86,7 @@ export default function Home() {
         ""
       ) : (
         <Link className="hover:underline" href={`/profile/${dbUser?.uid}`}>
-          <DashIcon />
+          Profile
         </Link>
       )}
     </div>

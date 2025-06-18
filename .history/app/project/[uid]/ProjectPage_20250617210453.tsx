@@ -288,7 +288,7 @@ const ProjectPage = ({ projUid }: Props) => {
           <button
             type="button"
             onClick={() => setSelectedDoc(null)}
-            className="place-self-start backdrop-blur-md fixed btn btn-outline 3xs:text-md sm:text-sm btn-squish"
+            className="place-self-start backdrop-blur-md fixed btn btn-outline 3xs:text-lg sm:text-sm btn-squish"
           >
             Back
           </button>

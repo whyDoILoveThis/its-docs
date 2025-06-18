@@ -49,7 +49,7 @@ const Navbar = () => {
             width={50}
             height={50}
           />
-          <b className="text-2xl">ItsDocs</b>
+          <b className="text-lg">ItsDocs</b>
         </Link>
         <div className="flex items-center gap-2">
           <button

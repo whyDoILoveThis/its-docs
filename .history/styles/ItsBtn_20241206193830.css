@@ -131,12 +131,6 @@
     items-center;
 }
 
-.btn-reg {
-  @apply text-[50px]
-    p-1
-    px-3;
-}
-
 .btn-sm {
   @apply text-sm
   p-1

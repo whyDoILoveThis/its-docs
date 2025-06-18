@@ -13,7 +13,6 @@ import itsDateStringNames from "@/lib/itsDateStringNames";
 import UpdateProjectForm from "@/components/Project/UpdateProjForm";
 import EditIcon from "@/components/icons/EditIcon";
 import { useAuth } from "@clerk/nextjs";
-import Image from "next/image";
 
 interface Props {
   projUid: string;
@@ -131,7 +130,7 @@ const ProjectPage = ({ projUid }: Props) => {
               <ItsDropdown
                 closeWhenClicked={true}
                 btnText="Settings"
-                btnClassNames="btn btn-outline 3xs:text-md sm:text-sm btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
+                btnClassNames="btn btn-outline 3xs:btn-reg sm:btn-xs btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
                 menuClassNames="-translate-x-20"
               >
                 <li
@@ -162,14 +161,6 @@ const ProjectPage = ({ projUid }: Props) => {
           <header className="mb-8 max-w-[280px] flex flex-col items-center">
             <div className="flex flex-col">
               <span className="flex items-center gap-1">
-                {theProject && theProject.logoUrl && (
-                  <Image
-                    width={40}
-                    height={40}
-                    src={theProject?.logoUrl}
-                    alt={`${theProject.title}'s logo`}
-                  />
-                )}
                 <h1 className="font-bold">{theProject?.title}</h1>
                 {editMode && (
                   <button
@@ -288,7 +279,7 @@ const ProjectPage = ({ projUid }: Props) => {
           <button
             type="button"
             onClick={() => setSelectedDoc(null)}
-            className="place-self-start backdrop-blur-md fixed btn btn-outline 3xs:text-md sm:text-sm btn-squish"
+            className="place-self-start backdrop-blur-md fixed btn btn-outline 3xs:btn-reg "
           >
             Back
           </button>
