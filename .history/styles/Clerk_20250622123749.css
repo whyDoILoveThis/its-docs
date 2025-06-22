@@ -166,42 +166,11 @@
 }
 
 
-.cl-socialButtonsBlockButton.cl-button {
+.cl-socialButtonsBlockButton.cl-button.cl-socialButtonsBlockButton__github.cl-button__github.🔒️.cl-internal-yj31gg {
   @apply bg-black
     bg-opacity-20
     hover:bg-opacity-30
     dark:bg-white
     dark:bg-opacity-20
-    hover:dark:bg-opacity-30
-    text-white
-    dark:text-white
-}
-
-.cl-headerTitle {
-  @apply text-white
-    dark:text-white;
-}
-
-.cl-headerSubtitle {
-  @apply text-slate-300
-    dark:text-slate-400;}
-
-.cl-formFieldLabel {
-  @apply text-white
-}
-
-.cl-dividerLine {
-  background-color: rgba(255, 255, 255, 0.418);
-}
-
-.cl-dividerText {
-  @apply text-slate-300
-  dark:text-slate-400
-}
-
-.cl-modalCloseButton.cl-button.🔒️.cl-internal-1p9bjxm {
-  @apply text-white
-    dark:text-white
-    hover:bg-white
-    hover:bg-opacity-20;
+    hover:dark:bg-opacity-30;
 }
