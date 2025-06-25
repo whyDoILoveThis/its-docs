@@ -44,7 +44,7 @@
     w-fit
     bg-opacity-0
     flex
-    place-self-end-fix
+    place-self-end
     overflow-visible
     -bottom-[17px];
 }
@@ -191,9 +191,17 @@
 }
 
 .cl-dividerLine {
-  background-color: rgba(255, 255, 255, 0.659);
+  background-color: rgba(255, 255, 255, 0.418);
 }
 
 .cl-dividerText {
   @apply text-slate-300
+  dark:text-slate-400
+}
+
+.cl-modalCloseButton.cl-button.🔒️.cl-internal-1p9bjxm {
+  @apply text-white
+    dark:text-white
+    hover:bg-white
+    hover:bg-opacity-20;
 }

@@ -44,7 +44,7 @@
     w-fit
     bg-opacity-0
     flex
-    place-self-end
+    place-self-end-fix
     overflow-visible
     -bottom-[17px];
 }

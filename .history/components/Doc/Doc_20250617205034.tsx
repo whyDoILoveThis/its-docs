@@ -370,7 +370,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
         )}
       {/** SETTINGS BTN */}
       {userId && userId === theProject.creatorUid && (
-        <div className="w-fit fixed place-self-end">
+        <div className="w-fit fixed place-self-end-fix">
           <ItsDropdown
             closeWhenClicked={true}
             btnText="Settings"
@@ -480,7 +480,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
       {/** SAVE BTN */}
       {moveMode && (
         <button
-          className="btn btn-green fixed bottom-2 backdrop-blur-md z-10 place-self-end"
+          className="btn btn-green fixed bottom-2 backdrop-blur-md z-10 place-self-end-fix"
           onClick={saveUpdatedDocItems}
           disabled={loading}
         >
@@ -489,7 +489,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
       )}
       {(editMode || doc !== localDoc) && (
         <button
-          className="btn btn-green fixed bottom-2 backdrop-blur-md place-self-end"
+          className="btn btn-green fixed bottom-2 backdrop-blur-md place-self-end-fix"
           onClick={saveUpdatedDocItems}
           disabled={loading}
         >

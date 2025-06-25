@@ -127,7 +127,7 @@ const ProjectPage = ({ projUid }: Props) => {
       {selectedDoc === null ? (
         <div className="w-full flex flex-col items-center">
           {theProject?.creatorUid === userId && (
-            <div className="w-fit place-self-end px-2">
+            <div className="w-fit place-self-end-fix px-2">
               <ItsDropdown
                 closeWhenClicked={true}
                 btnText="Settings"

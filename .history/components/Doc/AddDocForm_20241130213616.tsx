@@ -113,7 +113,7 @@ const AddDocForm = ({ projUid, refetchProject }: Props) => {
               className="input min-h-[100px]"
             />
           </div>
-          <button type="submit" className="btn btn-green place-self-end">
+          <button type="submit" className="btn btn-green place-self-end-fix">
             Add Doc
           </button>
         </form>

@@ -158,10 +158,4 @@ a {
   body {
     @apply bg-background text-foreground;
   }
-
-.place-self-end-fix {
-  align-self: flex-end;
-  justify-self: flex-end;
-}
-
 }

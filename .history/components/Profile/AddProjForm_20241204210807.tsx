@@ -133,7 +133,7 @@ const AddProjForm = ({ refetchProjects }: Props) => {
             </label>
             <ItsDatePicker onDateChange={setTheDate} useMonthNames={true} />
           </div>
-          <button type="submit" className="btn btn-green place-self-end-fix">
+          <button type="submit" className="btn btn-green place-self-end">
             Add Project
           </button>
         </form>

@@ -51,7 +51,7 @@ const SearchPopover = ({ onClose }: Props) => {
       <div className="p-4 rounded-lg shadow-lg w-full max-w-md zz-top-plus2">
         <button
           onClick={onClose}
-          className="btn btn-round btn-red place-self-end-fix text-xl mb-4 zz-top-plus2"
+          className="btn btn-round btn-red place-self-end text-xl mb-4 zz-top-plus2"
         >
           ✖
         </button>
