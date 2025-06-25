@@ -2,11 +2,12 @@ import PlusIcon from "@/components/icons/PlusIcon";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import React, { useEffect, useState } from "react";
 import docItemStyles from "./docItemStyles";
+import CameraIcon from "../icons/CameraIcon";
 import FileInputButton from "../FileInputButton";
 import Image from "next/image";
 
 interface Props {
-  handleAddDocItem: (image?: File | undefined) => void;
+  handleAddDocItem: () => void;
   formData: DocItem;
   setFormData: (item: DocItem) => void;
 }
@@ -30,7 +31,7 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
       onSubmit={(e) => {
         e.preventDefault();
         setLoading(true);
-        handleAddDocItem(image ? image : undefined);
+        handleAddDocItem();
       }}
     >
       <div className="relative flex items-center gap-2">
@@ -69,7 +70,7 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
       >
         {imageUrl && (
           <Image
-            className="mb-1 rounded-md"
+            className=""
             width={300}
             height={50}
             src={imageUrl}
@@ -85,7 +86,7 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
           />
         ) : inputColor === "pic" ? (
           <div
-            className={`${imageUrl !== "" && "absolute right-12 bottom-1"} ${
+            className={`absolute right-12 bottom-1 ${
               imageUrl !== "" && "mt-2"
             } items-center`}
           >

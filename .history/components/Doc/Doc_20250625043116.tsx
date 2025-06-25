@@ -13,7 +13,6 @@ import TrashIcon from "@/components/icons/TrashIcon";
 import { useAuth } from "@clerk/nextjs";
 import ProtectedElement from "./ProtectedDiv";
 import { fbUploadImage } from "@/lib/firebaseStorage";
-import Image from "next/image";
 
 interface Props {
   doc: Doc;
@@ -177,25 +176,17 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
 
   // Add new doc item
   const handleAddDocItem = async (image?: File) => {
-    if (formData.text === "") {
-      console.error("❌ Text is empty, cannot add doc item");
-      return;
-    }
-
-    let payload = {
-      ...formData,
-    };
     if (image !== null && image !== undefined) {
       const imageUrl = await fbUploadImage(image);
-      payload = { ...formData, text: imageUrl, style: "pic" };
-      console.log("Adding doc item with imagurl:", imageUrl);
+      setFormData({ ...formData, text: imageUrl, style: "pic" });
     }
+    console.log("Adding doc item with formData:", formData);
 
     try {
       const response = await fetch("/api/addDocItem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projUid, docUid: doc.uid, docItem: payload }),
+        body: JSON.stringify({ projUid, docUid: doc.uid, docItem: formData }),
       });
       console.log(response);
 
@@ -515,9 +506,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
         localDocItems.map((item: DocItem, index) => (
           <div className={`mb-4 w-full max-w-[500px] `} key={index}>
             <div className="flex flex-col items-center">
-              {item.style !== "code" &&
-              item.style !== "pic" &&
-              editDocItemIndex !== index ? (
+              {item.style !== "code" && editDocItemIndex !== index ? (
                 <div
                   onClick={() => {
                     setSelectedDocIndex(index);
@@ -564,31 +553,27 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
                     }}
                   />
                 </span>
-              ) : item.style !== "code" &&
-                item.style !== "pic" &&
-                editDocItemIndex === index ? (
-                <input
-                  type="text"
-                  defaultValue={tempItemText[index] || item.text}
-                  autoFocus
-                  onChange={(e) => {
-                    setItemText(index, e.target.value);
-                  }}
-                  className={`btn btn-nohover focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-2 dark:focus:ring-slate-700 ${
-                    item.style !== "code" && item.style
-                  } ${
-                    item.style === "text-xl font-bold " &&
-                    "!border-none !bg-transparent text-center leading-none mt-6"
-                  } ${
-                    editMode ? "!cursor-pointer" : "!cursor-default"
-                  } !w-full !max-w-[500px]`}
-                />
               ) : (
-                item.style === "pic" && (
-                  <Image width={500} height={500} src={item.text} alt={"pic"} />
+                item.style !== "code" &&
+                editDocItemIndex === index && (
+                  <input
+                    type="text"
+                    defaultValue={tempItemText[index] || item.text}
+                    autoFocus
+                    onChange={(e) => {
+                      setItemText(index, e.target.value);
+                    }}
+                    className={`btn btn-nohover focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-2 dark:focus:ring-slate-700 ${
+                      item.style !== "code" && item.style
+                    } ${
+                      item.style === "text-xl font-bold " &&
+                      "!border-none !bg-transparent text-center leading-none mt-6"
+                    } ${
+                      editMode ? "!cursor-pointer" : "!cursor-default"
+                    } !w-full !max-w-[500px]`}
+                  />
                 )
               )}
-
               {item.style === "text-xl font-bold " && (
                 <div className="flex items-center w-full">
                   <div className="w-3 h-3 bg-white rounded-sm" />
@@ -596,7 +581,6 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
                   <div className="w-3 h-3 bg-white rounded-sm" />
                 </div>
               )}
-
               {/* Move item arrows */}
               {moveMode && (
                 <div className="flex rounded-t-none pt-4 -translate-y-1 border-t-0 gap-2 p-2 w-full border rounded-lg">

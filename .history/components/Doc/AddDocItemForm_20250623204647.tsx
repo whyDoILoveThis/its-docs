@@ -2,11 +2,12 @@ import PlusIcon from "@/components/icons/PlusIcon";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import React, { useEffect, useState } from "react";
 import docItemStyles from "./docItemStyles";
+import CameraIcon from "../icons/CameraIcon";
 import FileInputButton from "../FileInputButton";
 import Image from "next/image";
 
 interface Props {
-  handleAddDocItem: (image?: File | undefined) => void;
+  handleAddDocItem: () => void;
   formData: DocItem;
   setFormData: (item: DocItem) => void;
 }
@@ -30,7 +31,7 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
       onSubmit={(e) => {
         e.preventDefault();
         setLoading(true);
-        handleAddDocItem(image ? image : undefined);
+        handleAddDocItem();
       }}
     >
       <div className="relative flex items-center gap-2">

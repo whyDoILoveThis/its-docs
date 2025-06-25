@@ -515,9 +515,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
         localDocItems.map((item: DocItem, index) => (
           <div className={`mb-4 w-full max-w-[500px] `} key={index}>
             <div className="flex flex-col items-center">
-              {item.style !== "code" &&
-              item.style !== "pic" &&
-              editDocItemIndex !== index ? (
+              {item.style !== "code" && editDocItemIndex !== index ? (
                 <div
                   onClick={() => {
                     setSelectedDocIndex(index);
@@ -585,7 +583,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
                 />
               ) : (
                 item.style === "pic" && (
-                  <Image width={500} height={500} src={item.text} alt={"pic"} />
+                  <Image width={300} height={300} src={item.text} alt={"pic"} />
                 )
               )}
 

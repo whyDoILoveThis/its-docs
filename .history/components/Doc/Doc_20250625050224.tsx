@@ -585,7 +585,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
                 />
               ) : (
                 item.style === "pic" && (
-                  <Image width={500} height={500} src={item.text} alt={"pic"} />
+                  <Image width={300} height={300} src={item.text} alt={"pic"} />
                 )
               )}
 

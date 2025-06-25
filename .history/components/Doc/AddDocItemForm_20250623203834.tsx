@@ -2,11 +2,12 @@ import PlusIcon from "@/components/icons/PlusIcon";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import React, { useEffect, useState } from "react";
 import docItemStyles from "./docItemStyles";
+import CameraIcon from "../icons/CameraIcon";
 import FileInputButton from "../FileInputButton";
 import Image from "next/image";
 
 interface Props {
-  handleAddDocItem: (image?: File | undefined) => void;
+  handleAddDocItem: () => void;
   formData: DocItem;
   setFormData: (item: DocItem) => void;
 }
@@ -30,7 +31,7 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
       onSubmit={(e) => {
         e.preventDefault();
         setLoading(true);
-        handleAddDocItem(image ? image : undefined);
+        handleAddDocItem();
       }}
     >
       <div className="relative flex items-center gap-2">
@@ -69,7 +70,7 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
       >
         {imageUrl && (
           <Image
-            className="mb-1 rounded-md"
+            className=""
             width={300}
             height={50}
             src={imageUrl}
@@ -83,14 +84,6 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             }}
             className="bg-transparent focus:outline-none"
           />
-        ) : inputColor === "pic" ? (
-          <div
-            className={`${imageUrl !== "" && "absolute right-12 bottom-1"} ${
-              imageUrl !== "" && "mt-2"
-            } items-center`}
-          >
-            <FileInputButton setImage={setImage} setImageUrl={setImageUrl} />
-          </div>
         ) : (
           <input
             onChange={(e) => {
@@ -101,16 +94,23 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
           />
         )}
         {imageUrl !== "" && (
-          <button
-            onClick={() => {
-              setImageUrl("");
-              setFormData({ ...formData, text: "" });
-            }}
-            type="button"
-            className="absolute bottom-1 right-2 btn btn-round btn-red text-3xl"
+          <div
+            className={`flex gap-2 ${imageUrl !== "" && "mt-2"} items-center`}
           >
-            -
-          </button>
+            <FileInputButton setImage={setImage} setImageUrl={setImageUrl} />
+            {imageUrl !== "" && (
+              <button
+                onClick={() => {
+                  setImageUrl("");
+                  setFormData({ ...formData, text: "" });
+                }}
+                type="button"
+                className="absolute bottom-0 right-0 btn btn-round btn-red text-3xl"
+              >
+                -
+              </button>
+            )}
+          </div>
         )}
         {formData.text !== "" && (
           <button

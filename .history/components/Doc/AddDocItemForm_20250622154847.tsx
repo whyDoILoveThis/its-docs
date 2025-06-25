@@ -2,35 +2,27 @@ import PlusIcon from "@/components/icons/PlusIcon";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import React, { useEffect, useState } from "react";
 import docItemStyles from "./docItemStyles";
-import FileInputButton from "../FileInputButton";
-import Image from "next/image";
+import CameraIcon from "../icons/CameraIcon";
 
 interface Props {
-  handleAddDocItem: (image?: File | undefined) => void;
+  handleAddDocItem: (e: React.FormEvent) => void;
   formData: DocItem;
   setFormData: (item: DocItem) => void;
 }
 const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
   const [inputColor, setInputColor] = useState("btn-blue");
   const [loading, setLoading] = useState(false);
-  const [image, setImage] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string>("");
 
   useEffect(() => {
     setFormData({ ...formData, style: "btn-blue" });
   }, []);
 
-  useEffect(() => {
-    setFormData({ ...formData, text: imageUrl, style: "pic" });
-  }, [imageUrl]);
-
   return (
     <form
       className="fixed bottom-2 flex flex-col gap-2 items-center w-full left-0"
       onSubmit={(e) => {
-        e.preventDefault();
         setLoading(true);
-        handleAddDocItem(image ? image : undefined);
+        handleAddDocItem(e);
       }}
     >
       <div className="relative flex items-center gap-2">
@@ -50,11 +42,11 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             }  ${btn.text === "Code" && "!border-purple-500 !text-purple-200"}
               ${
                 btn.text === "Pic" &&
-                "!border--500 !text-blue-400 absolute left-0 top-8"
+                "!border-emerald-500 !text-emerald-200 absolute left-0 top-8"
               }
             !border-opacity-75 backdrop-blur-md`}
           >
-            {btn.text}
+            {btn.text === "Pic" ? <CameraIcon /> : btn.text}
           </button>
         ))}
       </div>
@@ -63,19 +55,8 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
           inputColor === "code"
             ? "!border-purple-500"
             : inputColor !== "text-xl font-bold " && inputColor
-        } backdrop-blur-md flex justify-between items-center ${
-          inputColor === "pic" && "flex-col"
-        }`}
+        } backdrop-blur-md flex justify-between items-center`}
       >
-        {imageUrl && (
-          <Image
-            className="mb-1 rounded-md"
-            width={300}
-            height={50}
-            src={imageUrl}
-            alt="screenshot"
-          />
-        )}
         {inputColor === "code" ? (
           <textarea
             onChange={(e) => {
@@ -83,14 +64,6 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             }}
             className="bg-transparent focus:outline-none"
           />
-        ) : inputColor === "pic" ? (
-          <div
-            className={`${imageUrl !== "" && "absolute right-12 bottom-1"} ${
-              imageUrl !== "" && "mt-2"
-            } items-center`}
-          >
-            <FileInputButton setImage={setImage} setImageUrl={setImageUrl} />
-          </div>
         ) : (
           <input
             onChange={(e) => {
@@ -100,22 +73,10 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             type="text"
           />
         )}
-        {imageUrl !== "" && (
-          <button
-            onClick={() => {
-              setImageUrl("");
-              setFormData({ ...formData, text: "" });
-            }}
-            type="button"
-            className="absolute bottom-1 right-2 btn btn-round btn-red text-3xl"
-          >
-            -
-          </button>
-        )}
         {formData.text !== "" && (
           <button
             disabled={loading}
-            className={`btn ${inputColor} btn-round text-2xl `}
+            className="btn btn-round text-2xl"
             type="submit"
           >
             {loading ? <LoaderSpinSmall /> : <PlusIcon />}

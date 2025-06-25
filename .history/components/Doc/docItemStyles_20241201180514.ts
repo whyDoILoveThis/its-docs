@@ -27,10 +27,6 @@ const docItemStyles = [
       color: "code",
       text: "Code",
     },
-    {
-      color: "pic",
-      text: "Pic",
-    }
   ];
 
   export default docItemStyles

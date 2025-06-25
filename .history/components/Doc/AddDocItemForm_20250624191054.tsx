@@ -6,7 +6,7 @@ import FileInputButton from "../FileInputButton";
 import Image from "next/image";
 
 interface Props {
-  handleAddDocItem: (image?: File | undefined) => void;
+  handleAddDocItem: (image?: File | null) => void;
   formData: DocItem;
   setFormData: (item: DocItem) => void;
 }
@@ -30,7 +30,7 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
       onSubmit={(e) => {
         e.preventDefault();
         setLoading(true);
-        handleAddDocItem(image ? image : undefined);
+        handleAddDocItem(image && image);
       }}
     >
       <div className="relative flex items-center gap-2">

@@ -2,11 +2,12 @@ import PlusIcon from "@/components/icons/PlusIcon";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import React, { useEffect, useState } from "react";
 import docItemStyles from "./docItemStyles";
+import CameraIcon from "../icons/CameraIcon";
 import FileInputButton from "../FileInputButton";
 import Image from "next/image";
 
 interface Props {
-  handleAddDocItem: (image?: File | undefined) => void;
+  handleAddDocItem: (e: React.FormEvent) => void;
   formData: DocItem;
   setFormData: (item: DocItem) => void;
 }
@@ -20,17 +21,12 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
     setFormData({ ...formData, style: "btn-blue" });
   }, []);
 
-  useEffect(() => {
-    setFormData({ ...formData, text: imageUrl, style: "pic" });
-  }, [imageUrl]);
-
   return (
     <form
       className="fixed bottom-2 flex flex-col gap-2 items-center w-full left-0"
       onSubmit={(e) => {
-        e.preventDefault();
         setLoading(true);
-        handleAddDocItem(image ? image : undefined);
+        handleAddDocItem(e);
       }}
     >
       <div className="relative flex items-center gap-2">
@@ -50,11 +46,11 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             }  ${btn.text === "Code" && "!border-purple-500 !text-purple-200"}
               ${
                 btn.text === "Pic" &&
-                "!border--500 !text-blue-400 absolute left-0 top-8"
+                "!border-slate-500 !text-blue-400 absolute left-0 top-8"
               }
             !border-opacity-75 backdrop-blur-md`}
           >
-            {btn.text}
+            {btn.text === "Pic" ? <CameraIcon /> : btn.text}
           </button>
         ))}
       </div>
@@ -69,8 +65,8 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
       >
         {imageUrl && (
           <Image
-            className="mb-1 rounded-md"
-            width={300}
+            className=""
+            width={50}
             height={50}
             src={imageUrl}
             alt="screenshot"
@@ -84,12 +80,11 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             className="bg-transparent focus:outline-none"
           />
         ) : inputColor === "pic" ? (
-          <div
-            className={`${imageUrl !== "" && "absolute right-12 bottom-1"} ${
-              imageUrl !== "" && "mt-2"
-            } items-center`}
-          >
+          <div className="flex items-center">
             <FileInputButton setImage={setImage} setImageUrl={setImageUrl} />
+            <button type="button" className="btn btn-round !p-1 text-3xl">
+              -
+            </button>
           </div>
         ) : (
           <input
@@ -100,22 +95,10 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             type="text"
           />
         )}
-        {imageUrl !== "" && (
-          <button
-            onClick={() => {
-              setImageUrl("");
-              setFormData({ ...formData, text: "" });
-            }}
-            type="button"
-            className="absolute bottom-1 right-2 btn btn-round btn-red text-3xl"
-          >
-            -
-          </button>
-        )}
         {formData.text !== "" && (
           <button
             disabled={loading}
-            className={`btn ${inputColor} btn-round text-2xl `}
+            className="btn btn-round text-2xl"
             type="submit"
           >
             {loading ? <LoaderSpinSmall /> : <PlusIcon />}
