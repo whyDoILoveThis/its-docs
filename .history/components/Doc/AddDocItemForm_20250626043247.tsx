@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import docItemStyles from "./docItemStyles";
 import FileInputButton from "../FileInputButton";
 import Image from "next/image";
+import { log } from "console";
 
 interface Props {
   handleAddDocItem: (image?: File | undefined) => void;
@@ -20,6 +21,12 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
     setFormData({ ...formData, style: "btn-blue" });
   }, []);
 
+  useEffect(() => {
+    console.log("gotcha");
+
+    setFormData({ ...formData, text: imageUrl, style: "pic" });
+  }, [image]);
+
   console.log("DATA", formData);
   console.log("imageUrl", imageUrl);
 
@@ -29,6 +36,10 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
       onSubmit={(e) => {
         e.preventDefault();
         setLoading(true);
+        if (formData.style === "pic" && image === null) {
+          setFormData({ ...formData, style: "btn-blue" });
+          setInputColor("btn-blue");
+        }
         handleAddDocItem(image ? image : undefined);
       }}
     >
@@ -102,7 +113,6 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
         {imageUrl !== "" && (
           <button
             onClick={() => {
-              setImage(null);
               setImageUrl("");
               setFormData({ ...formData, text: "" });
             }}
@@ -112,16 +122,15 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             -
           </button>
         )}
-        {formData.text !== "" ||
-          (image !== null && (
-            <button
-              disabled={loading}
-              className={`btn ${inputColor} btn-round text-2xl `}
-              type="submit"
-            >
-              {loading ? <LoaderSpinSmall /> : <PlusIcon />}
-            </button>
-          ))}
+        {formData.text !== "" && (
+          <button
+            disabled={loading}
+            className={`btn ${inputColor} btn-round text-2xl `}
+            type="submit"
+          >
+            {loading ? <LoaderSpinSmall /> : <PlusIcon />}
+          </button>
+        )}
       </div>
     </form>
   );

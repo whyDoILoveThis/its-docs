@@ -67,7 +67,7 @@ const ItsDropdown = ({
                 }`
           }`}
         >
-          <div className="zz-top-plus2 flex flex-col gap-2">
+          <div className="zz-top flex flex-col gap-2">
             <div className="z-ten absolute inset-0 rounded-md backdrop-blur-md"></div>{" "}
             <ul className="text-shadow zz-top">{children}</ul>
           </div>

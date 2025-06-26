@@ -14,7 +14,6 @@ import UpdateProjectForm from "@/components/Project/UpdateProjForm";
 import EditIcon from "@/components/icons/EditIcon";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
-import MockImage from "@/components/icons/MockImage";
 
 interface Props {
   projUid: string;
@@ -165,33 +164,29 @@ const ProjectPage = ({ projUid }: Props) => {
               <span className="flex items-center gap-1">
                 {theProject && theProject.logoUrl && (
                   <Image
-                    width={50}
-                    height={50}
+                    width={40}
+                    height={40}
                     src={theProject?.logoUrl}
                     alt={`${theProject.title}'s logo`}
                   />
                 )}
                 {editMode && (
                   <button
-                    onClick={() => setSelectedUpdate(0)}
-                    className="ml-1 mr-2 btn btn-sm"
+                    onClick={() => setSelectedUpdate(1)}
+                    className="ml-2 btn btn-sm"
                   >
-                    {theProject && theProject.logoUrl ? (
-                      <EditIcon />
-                    ) : (
-                      <MockImage />
-                    )}
+                    <EditIcon />
                   </button>
                 )}
-                {theProject && editMode && selectedUpdate === 0 && (
+                {theProject && editMode && selectedUpdate === 1 && (
                   <UpdateProjectForm
                     proj={theProject}
                     refetchProject={refetchProject}
-                    formType="logo"
+                    formType="title"
                     onCancel={() => setSelectedUpdate(-999)}
                   />
                 )}
-                <h1 className="font-bold text-3xl">{theProject?.title}</h1>
+                <h1 className="font-bold">{theProject?.title}</h1>
                 {editMode && (
                   <button
                     onClick={() => setSelectedUpdate(1)}

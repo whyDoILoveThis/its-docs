@@ -191,7 +191,7 @@ const ProjectPage = ({ projUid }: Props) => {
                     onCancel={() => setSelectedUpdate(-999)}
                   />
                 )}
-                <h1 className="font-bold text-3xl">{theProject?.title}</h1>
+                <h1 className="font-bold">{theProject?.title}</h1>
                 {editMode && (
                   <button
                     onClick={() => setSelectedUpdate(1)}

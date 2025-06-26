@@ -3,8 +3,6 @@ import axios from "axios";
 import ItsDatePicker from "../ItsDatePicker";
 import LoaderSpinSmall from "../LoaderSpinSmall";
 import ItsFileInput from "../ItsFileInput";
-import { fbDeleteImage, fbUploadImage } from "@/lib/firebaseStorage";
-import Image from "next/image";
 
 interface Props {
   refetchProject: () => void;
@@ -49,21 +47,7 @@ const UpdateProjectForm = ({
     e.preventDefault();
     setLoading(true);
 
-    let payload = {
-      ...formData,
-    };
-
-    if (image) {
-      const fbImageUrl = await fbUploadImage(image);
-      if (proj.logoUrl) {
-        fbDeleteImage(proj.logoUrl).catch((err) => {
-          console.error("Error deleting old image:", err);
-        });
-      }
-      payload = { ...payload, logoUrl: fbImageUrl };
-    }
-
-    const updates = Object.entries(payload).reduce((acc, [key, value]) => {
+    const updates = Object.entries(formData).reduce((acc, [key, value]) => {
       if (
         value instanceof Date ||
         (typeof value === "string" && value.trim() !== "")
@@ -121,9 +105,6 @@ const UpdateProjectForm = ({
       case "logo":
         return (
           <div>
-            {imageUrl && (
-              <Image width={50} height={50} src={imageUrl} alt="tempLogo" />
-            )}
             <ItsFileInput setImage={setImage} setImageUrl={setImageUrl} />
             <input
               type="text"

@@ -14,7 +14,7 @@ import UpdateProjectForm from "@/components/Project/UpdateProjForm";
 import EditIcon from "@/components/icons/EditIcon";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
-import MockImage from "@/components/icons/MockImage";
+import CameraReelIcon from "@/components/icons/CameraReelIcon";
 
 interface Props {
   projUid: string;
@@ -165,8 +165,8 @@ const ProjectPage = ({ projUid }: Props) => {
               <span className="flex items-center gap-1">
                 {theProject && theProject.logoUrl && (
                   <Image
-                    width={50}
-                    height={50}
+                    width={40}
+                    height={40}
                     src={theProject?.logoUrl}
                     alt={`${theProject.title}'s logo`}
                   />
@@ -179,7 +179,7 @@ const ProjectPage = ({ projUid }: Props) => {
                     {theProject && theProject.logoUrl ? (
                       <EditIcon />
                     ) : (
-                      <MockImage />
+                      <CameraReelIcon />
                     )}
                   </button>
                 )}
@@ -191,7 +191,7 @@ const ProjectPage = ({ projUid }: Props) => {
                     onCancel={() => setSelectedUpdate(-999)}
                   />
                 )}
-                <h1 className="font-bold text-3xl">{theProject?.title}</h1>
+                <h1 className="font-bold">{theProject?.title}</h1>
                 {editMode && (
                   <button
                     onClick={() => setSelectedUpdate(1)}

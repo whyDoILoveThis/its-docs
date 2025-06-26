@@ -102,7 +102,6 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
         {imageUrl !== "" && (
           <button
             onClick={() => {
-              setImage(null);
               setImageUrl("");
               setFormData({ ...formData, text: "" });
             }}

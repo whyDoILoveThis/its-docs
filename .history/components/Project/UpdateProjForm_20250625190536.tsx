@@ -121,9 +121,7 @@ const UpdateProjectForm = ({
       case "logo":
         return (
           <div>
-            {imageUrl && (
-              <Image width={50} height={50} src={imageUrl} alt="tempLogo" />
-            )}
+            <Image width={30} height={30} src={imageUrl} alt="tempLogo" />
             <ItsFileInput setImage={setImage} setImageUrl={setImageUrl} />
             <input
               type="text"

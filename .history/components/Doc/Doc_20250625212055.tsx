@@ -25,7 +25,7 @@ interface Props {
 const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
   const [formData, setFormData] = useState<DocItem>({
     uid: v4(),
-    style: "btn-blue",
+    style: "",
     text: "",
   });
   const { userId } = useAuth();
@@ -177,7 +177,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
 
   // Add new doc item
   const handleAddDocItem = async (image?: File) => {
-    if (formData.text === "" && formData.style !== "pic") {
+    if (formData.text === "") {
       console.error("❌ Text is empty, cannot add doc item");
       return;
     }
@@ -585,22 +585,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
                 />
               ) : (
                 item.style === "pic" && (
-                  <span
-                    className={` ${
-                      editMode ? "!cursor-pointer" : "!cursor-default"
-                    }`}
-                    onClick={() => {
-                      setSelectedDocIndex(index);
-                      setEditDocItemIndex(-999);
-                    }}
-                  >
-                    <Image
-                      width={500}
-                      height={500}
-                      src={item.text}
-                      alt={"pic"}
-                    />
-                  </span>
+                  <Image width={500} height={500} src={item.text} alt={"pic"} />
                 )
               )}
 

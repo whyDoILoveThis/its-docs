@@ -20,8 +20,11 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
     setFormData({ ...formData, style: "btn-blue" });
   }, []);
 
+  useEffect(() => {
+    setFormData({ ...formData, text: imageUrl, style: "pic" });
+  }, [imageUrl]);
+
   console.log("DATA", formData);
-  console.log("imageUrl", imageUrl);
 
   return (
     <form
@@ -29,6 +32,10 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
       onSubmit={(e) => {
         e.preventDefault();
         setLoading(true);
+        if (formData.style === "pic" && image === null) {
+          setFormData({ ...formData, style: "btn-blue" });
+          setInputColor("btn-blue");
+        }
         handleAddDocItem(image ? image : undefined);
       }}
     >
@@ -102,7 +109,6 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
         {imageUrl !== "" && (
           <button
             onClick={() => {
-              setImage(null);
               setImageUrl("");
               setFormData({ ...formData, text: "" });
             }}
@@ -112,16 +118,15 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             -
           </button>
         )}
-        {formData.text !== "" ||
-          (image !== null && (
-            <button
-              disabled={loading}
-              className={`btn ${inputColor} btn-round text-2xl `}
-              type="submit"
-            >
-              {loading ? <LoaderSpinSmall /> : <PlusIcon />}
-            </button>
-          ))}
+        {formData.text !== "" && (
+          <button
+            disabled={loading}
+            className={`btn ${inputColor} btn-round text-2xl `}
+            type="submit"
+          >
+            {loading ? <LoaderSpinSmall /> : <PlusIcon />}
+          </button>
+        )}
       </div>
     </form>
   );

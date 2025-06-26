@@ -102,7 +102,6 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
         {imageUrl !== "" && (
           <button
             onClick={() => {
-              setImage(null);
               setImageUrl("");
               setFormData({ ...formData, text: "" });
             }}
@@ -112,16 +111,15 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             -
           </button>
         )}
-        {formData.text !== "" ||
-          (image !== null && (
-            <button
-              disabled={loading}
-              className={`btn ${inputColor} btn-round text-2xl `}
-              type="submit"
-            >
-              {loading ? <LoaderSpinSmall /> : <PlusIcon />}
-            </button>
-          ))}
+        {formData.text !== "" && (
+          <button
+            disabled={loading}
+            className={`btn ${inputColor} btn-round text-2xl `}
+            type="submit"
+          >
+            {loading ? <LoaderSpinSmall /> : <PlusIcon />}
+          </button>
+        )}
       </div>
     </form>
   );

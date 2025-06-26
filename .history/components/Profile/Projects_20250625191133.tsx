@@ -26,17 +26,17 @@ const Projects = ({ projects, refetchProjects }: Props) => {
                 href={`/project/${proj.uid}`}
                 className="flex items-center justify-between p-4 bg-black bg-opacity-10 dark:bg-white dark:bg-opacity-10 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:bg-opacity-5 dark:hover:bg-opacity-5"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                   {proj.logoUrl && (
                     <Image
                       src={proj.logoUrl}
                       alt={proj.title}
-                      width={40}
-                      height={40}
+                      width={50}
+                      height={50}
                       className="rounded-full"
                     />
                   )}
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                  <p className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
                     {proj.title}
                   </p>
                 </div>

@@ -585,22 +585,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
                 />
               ) : (
                 item.style === "pic" && (
-                  <span
-                    className={` ${
-                      editMode ? "!cursor-pointer" : "!cursor-default"
-                    }`}
-                    onClick={() => {
-                      setSelectedDocIndex(index);
-                      setEditDocItemIndex(-999);
-                    }}
-                  >
-                    <Image
-                      width={500}
-                      height={500}
-                      src={item.text}
-                      alt={"pic"}
-                    />
-                  </span>
+                  <Image width={500} height={500} src={item.text} alt={"pic"} />
                 )
               )}
 
