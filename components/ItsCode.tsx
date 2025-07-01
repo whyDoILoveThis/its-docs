@@ -24,7 +24,7 @@ export default function ItsCode({
   }, [copying]);
 
   return (
-    <article className="overflow-scroll">
+    <article className="z--ten overflow-scroll">
       <div
         className="w-fit"
         onClick={() => {
@@ -47,7 +47,7 @@ export default function ItsCode({
         />
       </div>
 
-      <div className="relative z-lowest overflow-scroll">
+      <div className="relative overflow-scroll">
         <span
           className={` ${
             !copying ? "opacity-0 w-0 h-0" : "w-full h-full opacity-100"
