@@ -453,7 +453,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
         )}
       {/** SETTINGS BTN */}
       {userId && userId === theProject.creatorUid && (
-        <div className="w-fit fixed place-self-end-fix">
+        <div className="w-fit fixed place-self-end-fix zz-top">
           <ItsDropdown
             closeWhenClicked={true}
             btnText="Settings"
