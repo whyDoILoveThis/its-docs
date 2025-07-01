@@ -305,7 +305,7 @@ const ProjectPage = ({ projUid }: Props) => {
           <p>{theMessage && theMessage}</p>
         </div>
       ) : (
-        <div className="relative w-full flex flex-col px-2 items-center">
+        <div className="relative zz-top w-full flex flex-col px-2 items-center">
           <button
             type="button"
             onClick={() => setSelectedDoc(null)}
