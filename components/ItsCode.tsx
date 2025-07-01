@@ -24,7 +24,7 @@ export default function ItsCode({
   }, [copying]);
 
   return (
-    <article className="z-lowest overflow-scroll">
+    <article className="relative z-lowest overflow-scroll">
       <div
         className="w-fit"
         onClick={() => {
