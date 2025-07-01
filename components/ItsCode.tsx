@@ -47,7 +47,7 @@ export default function ItsCode({
         />
       </div>
 
-      <div className="relative z-lowest">
+      <div className="relative z-lowest overflow-scroll">
         <span
           className={` ${
             !copying ? "opacity-0 w-0 h-0" : "w-full h-full opacity-100"
@@ -56,7 +56,7 @@ export default function ItsCode({
           <p className="min-w-[150px] select-none">Copied🤗</p>
         </span>
         <SyntaxHighlighter
-          className="w-[300px] sm:w-[500px] p-0 m-0 rounded-lg"
+          className="w-[300px] sm:w-[500px] p-0 m-0 rounded-lg overflow-scroll"
           language={lang}
           style={vscDarkPlus}
         >
