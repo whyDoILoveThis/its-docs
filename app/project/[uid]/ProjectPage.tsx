@@ -305,11 +305,11 @@ const ProjectPage = ({ projUid }: Props) => {
           <p>{theMessage && theMessage}</p>
         </div>
       ) : (
-        <div className="relative zz-top w-full flex flex-col px-2 items-center">
+        <div className="relative w-full flex flex-col px-2 items-center">
           <button
             type="button"
             onClick={() => setSelectedDoc(null)}
-            className="place-self-start backdrop-blur-md fixed btn btn-outline 3xs:text-md sm:text-sm btn-squish"
+            className="place-self-start backdrop-blur-md fixed zz-top btn btn-outline 3xs:text-md sm:text-sm btn-squish"
           >
             Back
           </button>
