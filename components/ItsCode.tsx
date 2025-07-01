@@ -56,7 +56,7 @@ export default function ItsCode({
           <p className="min-w-[150px] select-none">Copied🤗</p>
         </span>
         <SyntaxHighlighter
-          className="w-[300px] sm:w-[500px] p-0 m-0 rounded-lg relative z--ten overflow-scroll"
+          className="w-[300px] sm:w-[500px] p-0 m-0 rounded-lg relative overflow-scroll"
           language={lang}
           style={vscDarkPlus}
         >
