@@ -24,7 +24,7 @@ export default function ItsCode({
   }, [copying]);
 
   return (
-    <article>
+    <article className="overflow-scroll">
       <div
         className="w-fit"
         onClick={() => {
