@@ -20,12 +20,6 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
     setFormData({ ...formData, style: "btn-blue" });
   }, []);
 
-  useEffect(() => {
-    if (inputColor === "pic") {
-      setFormData({ ...formData, text: "" });
-    }
-  }, [inputColor]);
-
   console.log("DATA", formData);
   console.log("imageUrl", imageUrl);
 
@@ -45,7 +39,9 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
             type="button"
             onClick={() => {
               setInputColor(btn.color);
-
+              if (btn.color === "pic") {
+                setFormData({ ...formData, text: "" });
+              }
               setFormData({ ...formData, style: btn.color });
             }}
             className={`btn btn-xs btn-squish ${
