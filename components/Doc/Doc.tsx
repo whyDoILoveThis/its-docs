@@ -561,18 +561,9 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
         )}
       </span>
       {/** SAVE BTN */}
-      {moveMode && (
+      {(moveMode || editMode) && (
         <button
           className="btn btn-green fixed bottom-2 backdrop-blur-md z-10 place-self-end-fix"
-          onClick={saveUpdatedDocItems}
-          disabled={loading}
-        >
-          {loading ? <LoaderSpinSmall /> : "Save Changes"}
-        </button>
-      )}
-      {editMode && doc.docItems !== localDocItems && (
-        <button
-          className="btn btn-green fixed bottom-2 backdrop-blur-md place-self-end-fix"
           onClick={saveUpdatedDocItems}
           disabled={loading}
         >
