@@ -801,7 +801,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
               {showImagePop &&
                 selectedDocIndex === index &&
                 item.style === "pic" && (
-                  <div className="fixed zz-top w-screen h-screen left-0 top-0 bg-black bg-opacity-80 backdrop-blur-sm flex flex-col items-center justify-center">
+                  <div className="fixed zz-top overflow-y-scroll w-screen h-screen left-0 top-0 bg-black bg-opacity-80 backdrop-blur-sm flex flex-col items-center justify-center p-2">
                     <p className="text-xl">Do you want to update this pic?</p>
                     {imageUrl && item.text && (
                       <div className="flex flex-col items-center gap-2">
@@ -862,6 +862,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
                         </button>
                         <button
                           className="btn btn-green"
+                          disabled={loadingNewImage}
                           onClick={() => {
                             handleUpdatePic(item.text);
                           }}
