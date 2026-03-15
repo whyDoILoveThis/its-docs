@@ -17,6 +17,7 @@ import Image from "next/image";
 import MockImage from "@/components/icons/MockImage";
 import { getImageSrc } from "@/lib/supabaseStorage";
 import AiDocForm from "@/components/Doc/AiDocForm";
+import GitHubImportForm from "@/components/Doc/GitHubImportForm";
 
 interface Props {
   projUid: string;
@@ -27,6 +28,7 @@ const ProjectPage = ({ projUid }: Props) => {
   const [theProject, setTheProject] = useState<Project | null>(null);
   const [addingDoc, setAddingDoc] = useState(false);
   const [showAiForm, setShowAiForm] = useState(false);
+  const [showGitHubImport, setShowGitHubImport] = useState(false);
   const [theMessage, setTheMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedDoc, setSelectedDoc] = useState<Doc | null>(null);
@@ -302,6 +304,7 @@ const ProjectPage = ({ projUid }: Props) => {
                 onClick={() => {
                   setAddingDoc(!addingDoc);
                   setShowAiForm(false);
+                  setShowGitHubImport(false);
                 }}
                 className="btn btn-round text-2xl"
               >
@@ -311,10 +314,21 @@ const ProjectPage = ({ projUid }: Props) => {
                 onClick={() => {
                   setShowAiForm(!showAiForm);
                   setAddingDoc(false);
+                  setShowGitHubImport(false);
                 }}
                 className={`btn btn-sm btn-squish ${showAiForm ? "btn-purple" : "btn-outline"}`}
               >
                 {showAiForm ? "Close AI" : "AI"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowGitHubImport(!showGitHubImport);
+                  setAddingDoc(false);
+                  setShowAiForm(false);
+                }}
+                className={`btn btn-sm btn-squish ${showGitHubImport ? "btn-purple" : "btn-outline"}`}
+              >
+                {showGitHubImport ? "Close Import" : "GitHub Import"}
               </button>
             </div>
           )}
@@ -326,6 +340,13 @@ const ProjectPage = ({ projUid }: Props) => {
               projUid={projUid}
               refetchProject={refetchProject}
               onClose={() => setShowAiForm(false)}
+            />
+          )}
+          {showGitHubImport && (
+            <GitHubImportForm
+              projUid={projUid}
+              refetchProject={refetchProject}
+              onClose={() => setShowGitHubImport(false)}
             />
           )}
           <p>{theMessage && theMessage}</p>
