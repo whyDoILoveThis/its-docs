@@ -4,6 +4,7 @@ import CloseIcon from "@/components/icons/CloseIcon";
 import PlusIcon from "@/components/icons/PlusIcon";
 import Link from "next/link";
 import Image from "next/image";
+import { getImageSrc } from "@/lib/supabaseStorage";
 
 interface Props {
   projects: Project[] | null;
@@ -29,7 +30,7 @@ const Projects = ({ projects, refetchProjects }: Props) => {
                 <div className="flex items-center gap-2">
                   {proj.logoUrl && (
                     <Image
-                      src={proj.logoUrl}
+                      src={getImageSrc(proj.logoUrl)}
                       alt={proj.title}
                       width={40}
                       height={40}

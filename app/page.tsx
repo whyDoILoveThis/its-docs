@@ -5,6 +5,7 @@ import { SearchIcon } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { getImageSrc } from "@/lib/supabaseStorage";
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,7 +19,7 @@ export default function Home() {
 
     try {
       const response = await fetch(
-        `/api/search?term=${encodeURIComponent(term)}`
+        `/api/search?term=${encodeURIComponent(term)}`,
       );
       const data = await response.json();
 
@@ -113,7 +114,7 @@ export default function Home() {
                 <span className="flex gap-1 items-center">
                   {project.logoUrl && (
                     <Image
-                      src={project.logoUrl}
+                      src={getImageSrc(project.logoUrl)}
                       alt={""}
                       width={25}
                       height={30}

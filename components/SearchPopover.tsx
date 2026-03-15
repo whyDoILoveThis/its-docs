@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Link from "next/link";
 import Image from "next/image";
+import { getImageSrc } from "@/lib/supabaseStorage";
 
 interface Props {
   onClose: () => void;
@@ -76,7 +77,7 @@ const SearchPopover = ({ onClose }: Props) => {
                 <span className="flex gap-1 items-center zz-top-plus2">
                   {project.logoUrl && (
                     <Image
-                      src={project.logoUrl}
+                      src={getImageSrc(project.logoUrl!)}
                       alt={""}
                       width={25}
                       height={30}

@@ -1,6 +1,20 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '../../../lib/mongodb';
 import Project from '@/models/Project';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
+
+const BUCKET = 'images';
+
+function storagePath(url: string): string {
+  const marker = `/storage/v1/object/public/${BUCKET}/`;
+  const idx = url.indexOf(marker);
+  return idx !== -1 ? url.slice(idx + marker.length) : url;
+}
+
+async function deleteStorageImage(url: string) {
+  if (!url || (!url.startsWith('http') && url.length < 10)) return;
+  await supabaseAdmin.storage.from(BUCKET).remove([storagePath(url)]);
+}
 
 export async function DELETE(request: Request) {
   try {
@@ -27,6 +41,18 @@ export async function DELETE(request: Request) {
         { error: 'Project not found ❌' },
         { status: 404 }
       );
+    }
+
+    // Find the doc being deleted so we can clean up its images
+    const docToDelete = project.docs.find((doc: Doc) => doc.uid === docId);
+
+    // Clean up: delete all doc item images from storage
+    if (docToDelete?.docItems) {
+      for (const item of docToDelete.docItems) {
+        if (item.style === 'pic' && item.text) {
+          deleteStorageImage(item.text).catch(console.error);
+        }
+      }
     }
 
     // Remove the doc with the matching ID

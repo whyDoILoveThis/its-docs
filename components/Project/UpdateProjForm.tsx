@@ -3,7 +3,7 @@ import axios from "axios";
 import ItsDatePicker from "../ItsDatePicker";
 import LoaderSpinSmall from "../LoaderSpinSmall";
 import ItsFileInput from "../ItsFileInput";
-import { fbDeleteImage, fbUploadImage } from "@/lib/firebaseStorage";
+import { fbUploadImage, fbDeleteImage } from "@/lib/supabaseStorage";
 import Image from "next/image";
 
 interface Props {
@@ -31,12 +31,14 @@ const UpdateProjectForm = ({
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string>("");
 
+  const [removeLogo, setRemoveLogo] = useState(false);
+
   useEffect(() => {
     setFormData((prev) => ({ ...prev, birth: proj.birth }));
   }, [proj.birth]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -54,24 +56,29 @@ const UpdateProjectForm = ({
     };
 
     if (image) {
-      const fbImageUrl = await fbUploadImage(image);
+      const newImageUrl = await fbUploadImage(image);
       if (proj.logoUrl) {
-        fbDeleteImage(proj.logoUrl).catch((err) => {
-          console.error("Error deleting old image:", err);
-        });
+        fbDeleteImage(proj.logoUrl).catch(console.error);
       }
-      payload = { ...payload, logoUrl: fbImageUrl };
+      payload = { ...payload, logoUrl: newImageUrl };
+    } else if (removeLogo && proj.logoUrl) {
+      fbDeleteImage(proj.logoUrl).catch(console.error);
+      payload = { ...payload, logoUrl: "" };
     }
 
-    const updates = Object.entries(payload).reduce((acc, [key, value]) => {
-      if (
-        value instanceof Date ||
-        (typeof value === "string" && value.trim() !== "")
-      ) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, unknown>);
+    const updates = Object.entries(payload).reduce(
+      (acc, [key, value]) => {
+        if (
+          value instanceof Date ||
+          (typeof value === "string" &&
+            (value.trim() !== "" || (key === "logoUrl" && removeLogo)))
+        ) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {} as Record<string, unknown>,
+    );
 
     if (Object.keys(updates).length === 0) {
       setMessage("Please fill out at least one field.");
@@ -125,13 +132,23 @@ const UpdateProjectForm = ({
               <Image width={50} height={50} src={imageUrl} alt="tempLogo" />
             )}
             <ItsFileInput setImage={setImage} setImageUrl={setImageUrl} />
-            <input
-              type="text"
-              name="logoUrl"
-              value={formData.logoUrl}
-              onChange={handleChange}
-              className="input w-full"
-            />
+            {proj.logoUrl && !removeLogo && (
+              <button
+                type="button"
+                className="btn btn-red btn-sm mt-2"
+                onClick={() => {
+                  setRemoveLogo(true);
+                  setFormData((prev) => ({ ...prev, logoUrl: "" }));
+                }}
+              >
+                Remove Logo
+              </button>
+            )}
+            {removeLogo && (
+              <p className="text-sm text-red-400 mt-1">
+                Logo will be removed on save
+              </p>
+            )}
           </div>
         );
       case "birth":

@@ -1,201 +1,491 @@
-
-.cl-card.cl-signIn-start.🔒️.cl-internal-1p733cp:before { 
-    font-weight: 700;
-    display: none;
-    color: #000000bf;
-    border: 1px solid #00000072;
-    border-radius: 10px;
-    background: #00000019;
-    content: '=== Guest login === Email=guest@g.com Password=1234';
+.cl-modalBackdrop {
+  z-index: 99999999;
+  align-items: center !important;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%) !important;
+  backdrop-filter: blur(12px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.2) !important;
 }
 
-
-
-
-.cl-userButtonPopoverMain.🔒️.cl-internal-8vb5lt {
-    backdrop-filter: blur(10px);
-    @apply 
-    bg-transparent
-    text-slate-800
-    dark:bg-black
-    dark:bg-opacity-25
-    dark:text-white
-
+.cl-header {
+  display: none !important;
 }
-
-.cl-userButtonPopoverCard.cl-userButton-popover.🔒️.cl-internal-8bykxp {
-    background: transparent;
-    overflow: visible;
-}
-
-.cl-internal-11ttlho {
-    @apply 
-    p-[2px]
-    px-2
-    flex
-    w-fit
-    bg-purple-500
-    rounded-bl-xl
-    rounded-br-xl
-    text-white
-    translate-x-[-10px]
-}
-
-.cl-userButtonPopoverFooter {
-    display: none;
-}
-
-.cl-userButtonPopoverFooter.🔒️.cl-internal-1857dod {
-    background: transparent;
-    @apply
-    absolute
-    w-fit
-    bg-opacity-0
-    flex
-    place-self-end
-    overflow-visible
-    -bottom-[17px]
-}
-
-.cl-internal-5ghyhf path {
-    
-    fill: white;
-}
-
-.cl-internal-5ghyhf ellipse {
-    fill: white;
-}
-
-.cl-internal-wf8x4b {
-    display: none;
-}
-
-
-.cl-userButtonPopoverMain.🔒️.cl-internal-muj3sv {
-   @apply
-   border
-   border-white
-   rounded-2xl
-   border-opacity-30
-   
-
-}
-
-.cl-userButtonPopoverActionButton.cl-button *,.cl-button {
-    @apply
-    dark:text-white
-    hover:dark:text-white
-    hover:bg-white
-    hover:bg-opacity-15
-}
-
-
-.cl-navbarMobileMenuRow.🔒️.cl-internal-1x28sfr{
-  background: transparent;
-  backdrop-filter: blur(8px);
-    @apply
-    bg-slate-400
-    bg-opacity-45
-    text-white
-    dark:bg-black
-    dark:bg-opacity-45
-}
-
-.cl-navbarMobileMenuRow *, .cl-navbarMobileMenuRow *:hover {
-  @apply text-white
-}
-
-.cl-internal-pp7u0o,.cl-navbar.🔒️.cl-internal-lt7rwl{
-    @apply
-  text-white
-     bg-slate-400
-    bg-opacity-95
-    dark:bg-black
-    dark:bg-opacity-95
-}
-
-.cl-scrollBox{
-    background: transparent;
-    @apply
-    dark:bg-black
-    dark:bg-opacity-60
-    mt-2
-    rounded-t-none
-    !text-white
-  }
-
-  
-  
-  .cl-cardBox.🔒️.cl-internal-mkizyn {
-    @apply
-    backdrop-blur-md
-    
-}
-
-.cl-scrollBox * {
-    @apply
-    text-white
-}
-
-
-
-.cl-modalBackdrop.🔒️.cl-internal-i34cwg {
-    backdrop-filter: blur(6px);
-    background: transparent;
-}
-
 
 .cl-footer {
-    display: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.cl-footer.🔒️.cl-internal-1mdy2np {
-    opacity: 0;
+.cl-footer, .cl-footer *, .cl-internal-b3fm6y {
+  @apply 
+  text-slate-300;
 }
 
-.cl-navbar.🔒️.cl-internal-k7p5wl {
-    backdrop-filter: blur(3px);
-    @apply
-    dark:bg-black
-    dark:bg-opacity-90
+.cl-footerActionLink:hover {
+  @apply text-slate-100;
 }
 
-.cl-menuList.🔒️.cl-internal-6lplep {
-    background: rgba(255, 0, 0, 0.279);
-    border: 1px solid rgba(255, 43, 43, 0.656);
+.cl-card.cl-signIn-start,
+.cl-card.cl-signIn-password,
+.cl-card.cl-signUp-start {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 28px;
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), 
+              inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
 }
 
-.cl-menuList.🔒️.cl-internal-6lplep *{
-   @apply
-   dark:text-red-200
-   text-red-600
+.cl-card.cl-signIn-start:hover,
+.cl-card.cl-signIn-password:hover,
+.cl-card.cl-signUp-start:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.4),
+              inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+}
 
+/* Universal text color for cards */
+.cl-card.cl-signIn-start *,
+.cl-card.cl-signIn-password *,
+.cl-card.cl-signUp-start * {
+  @apply text-slate-300;
+}
+
+/* Input field styles */
+.cl-formFieldInput {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.3s ease !important;
+  @apply text-slate-100 !important;
+}
+
+.cl-formFieldInput:focus {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  box-shadow: 0 0 15px 0 rgba(34, 197, 94, 0.2) !important;
+}
+
+/* Social Buttons */
+.cl-socialButtonsBlockButton {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  transition: all 0.3s ease !important;
+}
+
+.cl-socialButtonsBlockButton:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.cl-socialButtonsBlockButtonText {
+  @apply text-slate-200;
+}
+
+/* Social Icon Buttons (Google, etc.) */
+.cl-socialButtonsIconButton {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.cl-socialButtonsIconButton:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.15);
+}
+
+.cl-socialButtonsIconButton:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+/*
+██╗░░██╗███████╗███████╗██████╗░░██████╗
+██║░░██║██╔════╝██╔════╝██╔══██╗██╔════╝
+███████║█████╗░░█████╗░░██████╔╝╚█████╗░
+██╔══██║██╔══╝░░██╔══╝░░██╔══██╗░╚═══██╗
+██║░░██║███████╗███████╗██║░░██║██████╔╝
+╚═╝░░╚═╝╚══════╝╚══════╝╚═╝░░╚═╝╚═════╝░
+*/
+
+/* User Button & Popover */
+.cl-userButtonTrigger {
+  transition: all 0.3s ease !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.cl-userButtonTrigger:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4) !important;
+}
+
+.cl-userButtonPopoverCard {
+  background: linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(20px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.cl-userButtonPopoverCard * {
+  @apply text-slate-300 !important;
+}
+
+.cl-userButtonPopoverActionButton:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  @apply text-slate-100 !important;
+}
+
+/* User Profile / Manage Account Page */
+.cl-userProfile-root .cl-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 28px !important;
+  backdrop-filter: blur(20px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.cl-userProfile-root .cl-header,
+.cl-userProfile-root .cl-headerTitle,
+.cl-userProfile-root .cl-headerSubtitle,
+.cl-userProfile-root * {
+  @apply text-slate-300 !important;
+}
+
+/* Tabs (Profile, Security) */
+.cl-navbar {
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.cl-navbarButton {
+  color: rgba(255, 255, 255, 0.5) !important;
+  transition: all 0.3s ease !important;
+}
+
+.cl-navbarButton:hover {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.cl-navbarButton.cl-navbarButton__active {
+  color: #22c55e !important; /* Green-500 */
+  box-shadow: 0 2px 0 #22c55e !important;
+}
+
+.cl-menuList {
+  z-index: 99999999 !important; /* Force it to the top */
+}
+
+/* Form Sections */
+.cl-profileSection {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  padding: 1rem !important;
+  margin-top: 1.5rem !important;
+}
+
+/* Connected Accounts */
+.cl-connectedAccount-card {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Danger Zone */
+.cl-profileSection__danger {
+  border-color: rgba(239, 68, 68, 0.3) !important; /* Red-500 */
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%) !important;
+}
+
+.cl-profileSection__danger .cl-formButtonPrimary {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0.15) 100%) !important;
+  border: 1.5px solid rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 4px 15px 0 rgba(239, 68, 68, 0.2) !important;
+}
+
+.cl-formButtonPrimary {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(34, 197, 94, 0.15) 100%) !important;
+  border: 1.5px solid rgba(34, 197, 94, 0.5) !important;
+  box-shadow: 0 4px 15px 0 rgba(34, 197, 94, 0.2),
+              inset 0 1px 1px 0 rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  @apply
+  text-green-100
+  font-semibold
+  rounded-lg
+  cursor-pointer
+  transition-all
+  duration-300
+  hover:text-green-50
+  active:scale-95;
+}
+
+.cl-formButtonPrimary:hover {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.4) 0%, rgba(34, 197, 94, 0.25) 100%) !important;
+  border-color: rgba(34, 197, 94, 0.7) !important;
+  box-shadow: 0 6px 25px 0 rgba(34, 197, 94, 0.3),
+              inset 0 1px 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.cl-formFieldLabel {
+  @apply
+  text-slate-300
+  font-medium
+  text-sm
+  tracking-wide
+}
+
+.cl-formFieldAction {
+  @apply
+  text-slate-400
+  hover:text-slate-200
+  transition-colors
+  duration-200
+}
+
+.cl-headerTitle, .cl-headerSubtitle, .cl-socialButtonsBlockButtonText, .cl-dividerText, .cl-formFieldInput::placeholder {
+  @apply
+  text-slate-300
+}
+
+.cl-formFieldInput {
+  @apply
+  text-slate-100 !important;
+}
+
+/* Phone Number Country Code Dropdown - High z-index for popover */
+.cl-selectOptionsContainer {
+  z-index: 99999999 !important; /* Force it to the top */
+  background: linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(20px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Style scrollbar for the country code dropdown */
+.cl-internal-hjbyay::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cl-internal-hjbyay::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.cl-internal-hjbyay::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.cl-internal-hjbyay::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Lighten all text inside the country code dropdown */
+.cl-selectOptionsContainer * {
+  @apply text-slate-300 !important;
+}
+
+.cl-internal-6yn1y8 *::placeholder {
+  @apply text-slate-300 !important;
+}
+
+/* Lighten text for country code list items */
+.cl-selectOption {
+  @apply text-slate-300 !important;
+}
+
+.cl-selectOption:hover,
+.cl-selectOption[data-highlighted] {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  @apply text-slate-100 !important;
+}
+
+.cl-phoneInput-countryCodeListItem {
+  @apply text-slate-300;
+}
+
+.cl-phoneInput-countryCodeListItem:hover,
+.cl-phoneInput-countryCodeListItem:focus,
+.cl-phoneInput-countryCodeListItem[data-highlighted] {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  @apply text-slate-100;
+}
+
+/* Verification Code Inputs */
+.cl-verificationCodeField-input {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.3s ease !important;
+  @apply text-slate-100 !important;
+}
+
+.cl-verificationCodeField-input:focus {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  box-shadow: 0 0 15px 0 rgba(34, 197, 94, 0.2) !important;
+}
+
+/* Error messages and warnings */
+.cl-formFieldHint, .cl-formFieldWarning, .cl-formFieldError {
+  @apply text-red-400;
+}
+
+/* Elevate phone input container when active */
+.cl-phone-input[data-open="true"] {
+    z-index: 100000000 !important;
+}
+
+/*
+██╗░░██╗███████╗███████╗██████╗░░██████╗
+██║░░██║██╔════╝██╔════╝██╔══██╗██╔════╝
+███████║█████╗░░█████╗░░██████╔╝╚█████╗░
+██╔══██║██╔══╝░░██╔══╝░░██╔══██╗░╚═══██╗
+██║░░██║███████╗███████╗██║░░██║██████╔╝
+╚═╝░░╚═╝╚══════╝╚══════╝╚═╝░░╚═╝╚═════╝░
+*/
+
+/* User Button & Popover */
+.cl-userButton-root .cl-userButtonTrigger {
+  transition: all 0.3s ease !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.cl-userButton-root .cl-userButtonTrigger:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4) !important;
+}
+
+.cl-userButtonPopoverMain.🔒️.cl-internal-8vb5lt, .cl-scrollBox, .cl-navbar, .cl-navbarMobileMenuRow, .cl-actionCard  {
+  background: linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(20px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.cl-navbar
+
+.cl-navbarMobileMenuRow  {
+  padding: 0;
+}
+
+.cl-userButton-popoverCard * {
+  @apply text-slate-300 !important;
+}
+
+.cl-userButtonPopoverFooter.🔒️.cl-internal-pak4nu, .cl-internal-pe6vm4, .cl-profileSectionTitleText__danger  {
+  display: none !important;
 }
 
 
 
-.cl-actionCard.🔒️.cl-internal-1e217up {
-    background: transparent;
-    @apply
-    bg-white
-    dark:bg-black
-    bg-opacity-70
-    border
-    border-white
-    border-opacity-15
 
+
+
+.cl-userButton-popoverAction:hover,
+.cl-userButton-popoverAction__manageAccount:hover,
+.cl-userButton-popoverAction__signOut:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  @apply text-slate-100 !important;
 }
 
-.cl-formFieldInput.cl-input {
-    background: transparent;
-    @apply
-    bg-black
-    bg-opacity-10
-    dark:bg-white
-    dark:bg-opacity-20
+/* User Profile / Manage Account Page */
+.cl-userProfile-root .cl-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 28px !important;
+  backdrop-filter: blur(20px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
+.cl-userProfile-root *,
+.cl-userProfile-root .cl-headerTitle,
+.cl-userProfile-root .cl-headerSubtitle {
+  @apply text-slate-300 !important;
+}
 
-.cl-userButtonPopoverCard.cl-userButton-popover.🔒️.cl-internal-8bykxp {
-    background: transparent;
+/* Tabs (Profile, Security) */
+.cl-userProfile-root .cl-navbar {
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.cl-userProfile-root .cl-navbarButton {
+  color: rgba(255, 255, 255, 0.5) !important;
+  transition: all 0.3s ease !important;
+}
+
+.cl-userProfile-root .cl-navbarButton:hover {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.cl-userProfile-root .cl-navbarButton.cl-navbarButton__active {
+  color: #22c55e !important; /* Green-500 */
+  box-shadow: 0 2px 0 #22c55e !important;
+}
+
+/* Form Sections */
+.cl-userProfile-root .cl-profileSection,
+.cl-userProfile-root .cl-securitySection {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  padding: 1rem !important;
+  margin-top: 1.5rem !important;
+}
+
+/* Connected Accounts */
+.cl-userProfile-root .cl-connectedAccount-card {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Danger Zone */
+.cl-userProfile-root .cl-profileSection__danger {
+  border-color: rgba(239, 68, 68, 0.3) !important; /* Red-500 */
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%) !important;
+}
+
+.cl-userProfile-root .cl-profileSection__danger .cl-formButtonPrimary {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0.15) 100%) !important;
+  border: 1.5px solid rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 4px 15px 0 rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Re-apply primary button styles for user profile */
+.cl-userProfile-root .cl-formButtonPrimary {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(34, 197, 94, 0.15) 100%) !important;
+  border: 1.5px solid rgba(34, 197, 94, 0.5) !important;
+  box-shadow: 0 4px 15px 0 rgba(34, 197, 94, 0.2) !important;
+}
+
+/* Elevate phone input container when active */
+.cl-phone-input[data-open="true"] {
+    z-index: 100000000 !important;
+}
+
+.cl-internal-1dauvpw {
+    display: none !important;
 }

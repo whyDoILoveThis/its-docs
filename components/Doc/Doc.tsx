@@ -12,7 +12,11 @@ import EyeIcon from "@/components/icons/EyeIcon";
 import TrashIcon from "@/components/icons/TrashIcon";
 import { useAuth } from "@clerk/nextjs";
 import ProtectedElement from "./ProtectedDiv";
-import { fbDeleteImage, fbUploadImage } from "@/lib/firebaseStorage";
+import {
+  fbDeleteImage,
+  fbUploadImage,
+  getImageSrc,
+} from "@/lib/supabaseStorage";
 import Image from "next/image";
 import ItsTooltip from "../ItsTooltip";
 import ItsFileInput from "../FileInputButton";
@@ -58,7 +62,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
   const [loadingNewImage, setLoadingNewImage] = useState(false);
   const [replaceImage, setReplaceImage] = useState(false);
   const [loadedImages, setLoadedImages] = useState<{ [key: string]: boolean }>(
-    {}
+    {},
   );
   const [imgMsg, setImgMsg] = useState("");
 
@@ -148,7 +152,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
   const updateDocument = async (
     projUid: string,
     docId: string,
-    updatedDoc: Doc
+    updatedDoc: Doc,
   ) => {
     try {
       const response = await axios.put("/api/updateDoc", {
@@ -242,11 +246,11 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
 
   const handleDeleteDoc = async () => {
     const confirmed = await ItsConfirm(
-      `You are about to DELETE ${doc.title}!! Are you sure??`
+      `You are about to DELETE ${doc.title}!! Are you sure??`,
     );
     if (confirmed) {
       const confirmedAgain = await ItsConfirm(
-        `${doc.title} WILL BE GONE FOREVER ARE YOU SURE?!?!`
+        `${doc.title} WILL BE GONE FOREVER ARE YOU SURE?!?!`,
       );
       if (confirmedAgain) {
         setLoadingDelete(true);
@@ -273,7 +277,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
 
   const handleExitMode = async () => {
     const confirmed = await ItsConfirm(
-      `Are you sure you want to Exit? Changes will NOT be saved!`
+      `Are you sure you want to Exit? Changes will NOT be saved!`,
     );
 
     if (confirmed) {
@@ -670,7 +674,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
                       } `}
                       width={500}
                       height={500}
-                      src={imageUrl || item.text}
+                      src={imageUrl || getImageSrc(item.text)}
                       alt={"pic"}
                       onLoadingComplete={() => handleImgLoad(item.uid)}
                     />
@@ -712,6 +716,11 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
                     <h2 className="w-full font-bold">Edit</h2>
                     <button
                       onClick={() => {
+                        const removedItem = localDocItems[index];
+                        // Clean up image from storage if this is a pic item
+                        if (removedItem.style === "pic" && removedItem.text) {
+                          fbDeleteImage(removedItem.text).catch(console.error);
+                        }
                         const updatedItems = [...localDocItems];
                         updatedItems.splice(index, 1); // Remove the item at the current index
                         setLocalDocItems(updatedItems);
@@ -820,7 +829,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
                           }`}
                           width={200}
                           height={200}
-                          src={item.text}
+                          src={getImageSrc(item.text)}
                           alt="originalImg"
                           onLoadingComplete={() => handleImgLoad(item.text)}
                         />

@@ -15,6 +15,7 @@ import EditIcon from "@/components/icons/EditIcon";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import MockImage from "@/components/icons/MockImage";
+import { getImageSrc } from "@/lib/supabaseStorage";
 
 interface Props {
   projUid: string;
@@ -80,7 +81,7 @@ const ProjectPage = ({ projUid }: Props) => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `/api/getProjectByUid?projUid=${projUid}`
+        `/api/getProjectByUid?projUid=${projUid}`,
       );
 
       const project = response.data.project;
@@ -90,7 +91,7 @@ const ProjectPage = ({ projUid }: Props) => {
       setTheProject(project);
       if (selectedDoc) {
         setSelectedDoc(
-          project.docs.find((doc: Doc) => doc.uid === selectedDoc.uid)
+          project.docs.find((doc: Doc) => doc.uid === selectedDoc.uid),
         );
       }
       setEditMode(false);
@@ -115,6 +116,8 @@ const ProjectPage = ({ projUid }: Props) => {
   useEffect(() => {
     fetchProjectByUid(projUid);
   }, [projUid]);
+
+  console.log(theProject);
 
   if (loading)
     return (
@@ -167,7 +170,7 @@ const ProjectPage = ({ projUid }: Props) => {
                   <Image
                     width={50}
                     height={50}
-                    src={theProject?.logoUrl}
+                    src={getImageSrc(theProject.logoUrl!)}
                     alt={`${theProject.title}'s logo`}
                   />
                 )}

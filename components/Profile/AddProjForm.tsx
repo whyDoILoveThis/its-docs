@@ -2,7 +2,7 @@ import ItsDatePicker from "@/components/ItsDatePicker";
 import ItsFileInput from "@/components/ItsFileInput";
 import LoaderSpinner from "@/components/LoaderSpinner";
 import { useUserStore } from "@/hooks/useUserStore";
-import { fbUploadImage } from "@/lib/firebaseStorage";
+import { fbUploadImage } from "@/lib/supabaseStorage";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { v4 } from "uuid";
