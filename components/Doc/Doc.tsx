@@ -25,6 +25,7 @@ import TextIcon from "../icons/TextIcon";
 import { toggleScrollLock } from "@/lib/utils";
 import ArrowIcon from "../icons/ArrowIcon";
 import ItsSkeleton from "../ItsSkeleton";
+import AiModifyDocForm from "./AiModifyDocForm";
 
 interface Props {
   doc: Doc;
@@ -65,6 +66,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
     {},
   );
   const [imgMsg, setImgMsg] = useState("");
+  const [showAiModify, setShowAiModify] = useState(false);
 
   useEffect(() => {
     if (image !== null) {
@@ -518,6 +520,15 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
             >
               Delete
             </li>
+            <li
+              onClick={() => setShowAiModify(true)}
+              className={`btn btn-ghost btn-purple text-nowrap ${
+                (editMode && "blur-sm") || (moveMode && "blur-sm")
+              }`}
+              style={{ width: "100%" }}
+            >
+              AI
+            </li>
           </ItsDropdown>
         </div>
       )}
@@ -895,6 +906,14 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
           formData={formData}
           setFormData={setFormData}
           handleAddDocItem={handleAddDocItem}
+        />
+      )}
+      {showAiModify && (
+        <AiModifyDocForm
+          projUid={projUid}
+          doc={doc}
+          refetchProjectForDocs={refetchProjectForDocs}
+          onClose={() => setShowAiModify(false)}
         />
       )}
     </div>

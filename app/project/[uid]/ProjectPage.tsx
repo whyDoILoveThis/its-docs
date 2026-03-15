@@ -16,6 +16,7 @@ import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import MockImage from "@/components/icons/MockImage";
 import { getImageSrc } from "@/lib/supabaseStorage";
+import AiDocForm from "@/components/Doc/AiDocForm";
 
 interface Props {
   projUid: string;
@@ -25,6 +26,7 @@ const ProjectPage = ({ projUid }: Props) => {
   const { userId } = useAuth();
   const [theProject, setTheProject] = useState<Project | null>(null);
   const [addingDoc, setAddingDoc] = useState(false);
+  const [showAiForm, setShowAiForm] = useState(false);
   const [theMessage, setTheMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedDoc, setSelectedDoc] = useState<Doc | null>(null);
@@ -295,15 +297,36 @@ const ProjectPage = ({ projUid }: Props) => {
               ))}
           </ul>
           {userId && userId === theProject?.creatorUid && (
-            <button
-              onClick={() => setAddingDoc(!addingDoc)}
-              className="btn btn-round text-2xl my-4"
-            >
-              {addingDoc ? <CloseIcon /> : <PlusIcon />}
-            </button>
+            <div className="flex gap-2 my-4 items-center">
+              <button
+                onClick={() => {
+                  setAddingDoc(!addingDoc);
+                  setShowAiForm(false);
+                }}
+                className="btn btn-round text-2xl"
+              >
+                {addingDoc ? <CloseIcon /> : <PlusIcon />}
+              </button>
+              <button
+                onClick={() => {
+                  setShowAiForm(!showAiForm);
+                  setAddingDoc(false);
+                }}
+                className={`btn btn-sm btn-squish ${showAiForm ? "btn-purple" : "btn-outline"}`}
+              >
+                {showAiForm ? "Close AI" : "AI"}
+              </button>
+            </div>
           )}
           {addingDoc && (
             <AddDocForm projUid={projUid} refetchProject={refetchProject} />
+          )}
+          {showAiForm && (
+            <AiDocForm
+              projUid={projUid}
+              refetchProject={refetchProject}
+              onClose={() => setShowAiForm(false)}
+            />
           )}
           <p>{theMessage && theMessage}</p>
         </div>
