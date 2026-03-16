@@ -6,6 +6,71 @@ import { useToast } from "@/hooks/use-toast";
 import CloseIcon from "@/components/icons/CloseIcon";
 import ItsCode from "@/components/ItsCode";
 
+interface DocOperation {
+  type: "replace" | "insert_after" | "delete";
+  index: number;
+  item?: { style: string; text: string };
+  items?: { style: string; text: string }[];
+}
+
+function applyOperations(
+  currentItems: DocItem[],
+  operations: DocOperation[],
+): DocItem[] {
+  const deletes = new Set<number>();
+  const replaces = new Map<number, { style: string; text: string }>();
+  const inserts = new Map<number, { style: string; text: string }[]>();
+
+  for (const op of operations) {
+    if (op.type === "delete" && typeof op.index === "number")
+      deletes.add(op.index);
+    if (op.type === "replace" && typeof op.index === "number" && op.item)
+      replaces.set(op.index, op.item);
+    if (
+      op.type === "insert_after" &&
+      typeof op.index === "number" &&
+      op.items
+    ) {
+      const existing = inserts.get(op.index) || [];
+      inserts.set(op.index, [...existing, ...op.items]);
+    }
+  }
+
+  const result: DocItem[] = [];
+
+  // Inserts at the very beginning (index -1)
+  const beforeAll = inserts.get(-1);
+  if (beforeAll) {
+    for (const item of beforeAll)
+      result.push({ uid: v4(), style: item.style, text: item.text });
+  }
+
+  for (let i = 0; i < currentItems.length; i++) {
+    if (deletes.has(i)) {
+      // Still honor insert_after on deleted index
+      const afterDeleted = inserts.get(i);
+      if (afterDeleted)
+        for (const item of afterDeleted)
+          result.push({ uid: v4(), style: item.style, text: item.text });
+      continue;
+    }
+
+    if (replaces.has(i)) {
+      const rep = replaces.get(i)!;
+      result.push({ uid: v4(), style: rep.style, text: rep.text });
+    } else {
+      result.push({ ...currentItems[i] }); // Keep original with same uid
+    }
+
+    const afterThis = inserts.get(i);
+    if (afterThis)
+      for (const item of afterThis)
+        result.push({ uid: v4(), style: item.style, text: item.text });
+  }
+
+  return result;
+}
+
 interface ChatMsg {
   role: "user" | "ai";
   text: string;
@@ -115,20 +180,31 @@ const AiModifyDocForm = ({
       }
 
       const generated = aiData.result;
-      const newItems = (generated.docItems || []).map(
-        (item: { style: string; text: string }) => ({
-          uid: v4(),
-          style: item.style,
-          text: item.text,
-        }),
-      );
 
       let finalItems: DocItem[];
 
       if (mode === "add") {
+        const newItems = (generated.docItems || []).map(
+          (item: { style: string; text: string }) => ({
+            uid: v4(),
+            style: item.style,
+            text: item.text,
+          }),
+        );
         finalItems = [...currentItems, ...newItems];
       } else {
-        finalItems = newItems;
+        // Modify mode — use surgical operations if available, fallback to full replace
+        if (generated.operations && Array.isArray(generated.operations)) {
+          finalItems = applyOperations(currentItems, generated.operations);
+        } else {
+          finalItems = (generated.docItems || []).map(
+            (item: { style: string; text: string }) => ({
+              uid: v4(),
+              style: item.style,
+              text: item.text,
+            }),
+          );
+        }
       }
 
       // Trim forward history and push new version
@@ -136,13 +212,14 @@ const AiModifyDocForm = ({
       setHistory([...trimmed, finalItems]);
       setHistoryIndex(trimmed.length);
 
+      const addedCount = finalItems.length - currentItems.length;
       setMessages((prev) => [
         ...prev,
         {
           role: "ai",
           text:
             mode === "add"
-              ? `Added ${newItems.length} items — now ${finalItems.length} total.`
+              ? `Added ${addedCount} items — now ${finalItems.length} total.`
               : `Modified doc — now ${finalItems.length} items.`,
         },
       ]);

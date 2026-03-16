@@ -32,14 +32,25 @@ MODE "add" - Generate only new docItems to append to an existing doc:
   ]
 }
 
-MODE "modify" - Return the FULL modified docItems array. CRITICAL: You MUST include ALL existing items in your response. Only change the specific items the user asks about. Every item that the user did NOT ask you to change must be returned EXACTLY as-is, unchanged, in the same position. Do NOT remove, skip, or summarize any items. The output array should have at LEAST as many items as the input unless the user explicitly asks to remove something.
+MODE "modify" - Return ONLY the changes needed as an operations array. Do NOT return unchanged items.
+
+Existing items are listed with 0-based index numbers like [0], [1], etc.
+Return a JSON object with an "operations" array. Each operation is one of:
+- Replace an item: { "type": "replace", "index": <number>, "item": { "style": "...", "text": "..." } }
+- Insert new items after a position: { "type": "insert_after", "index": <number>, "items": [{ "style": "...", "text": "..." }] }
+  Use "index": -1 to insert at the very beginning of the doc.
+- Delete an item: { "type": "delete", "index": <number> }
+
+Example:
 {
-  "docItems": [
-    { "style": "text-xl font-bold ", "text": "Existing Section Unchanged" },
-    { "style": "btn-blue", "text": "This item was modified per user request" },
-    { "style": "btn-green", "text": "This existing item stays exactly the same" }
+  "operations": [
+    { "type": "replace", "index": 2, "item": { "style": "btn-blue", "text": "Updated text" } },
+    { "type": "insert_after", "index": 3, "items": [{ "style": "code", "text": "new code here" }] },
+    { "type": "delete", "index": 7 }
   ]
 }
+
+CRITICAL: Indices are 0-based and refer to the CURRENT item positions as listed. Only include operations for items you are actually changing, inserting, or deleting. Everything not mentioned stays exactly where it is. To insert at the very end, use the index of the last existing item.
 
 STYLE GUIDE - use these style values:
 - "text-xl font-bold " = Section headers (use to break up content into logical sections)
@@ -82,7 +93,13 @@ export async function POST(req: Request) {
     let userContent = `Mode: ${mode}\nPrompt: ${prompt}`;
 
     if ((mode === "add" || mode === "modify") && existingDocItems) {
-      userContent += `\n\nExisting doc items:\n${JSON.stringify(existingDocItems, null, 2)}`;
+      const indexed = existingDocItems
+        .map(
+          (item: { style: string; text: string }, i: number) =>
+            `[${i}] (${item.style}) ${item.text}`
+        )
+        .join("\n");
+      userContent += `\n\nExisting doc items:\n${indexed}`;
     }
 
     const messages = [

@@ -52,6 +52,46 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const DELAY_BETWEEN_CHUNKS_MS = 4000; // 4 sec between AI calls to avoid rate limit
 const MAX_RETRIES = 3;
 const RATE_LIMIT_WAIT_MS = 15000; // 15 sec wait on rate limit
+const MAX_FILE_TOKENS_PER_REQUEST = 18000; // Safe limit within 30k TPM
+
+// Rough token estimate: 1 token ≈ 4 chars
+const estimateTokens = (text: string) => Math.ceil(text.length / 4);
+
+// Split files into chunks fitting within a token budget
+const chunkFilesByBudget = (
+  files: { path: string; content: string }[],
+  tokenBudget: number,
+): { path: string; content: string }[][] => {
+  const chunks: { path: string; content: string }[][] = [];
+  let currentChunk: { path: string; content: string }[] = [];
+  let currentTokens = 0;
+
+  for (const file of files) {
+    const fileTokens = estimateTokens(`--- ${file.path} ---\n${file.content}`);
+    if (fileTokens > tokenBudget) {
+      if (currentChunk.length > 0) {
+        chunks.push(currentChunk);
+        currentChunk = [];
+        currentTokens = 0;
+      }
+      chunks.push([file]);
+      continue;
+    }
+    if (currentTokens + fileTokens > tokenBudget && currentChunk.length > 0) {
+      chunks.push(currentChunk);
+      currentChunk = [];
+      currentTokens = 0;
+    }
+    currentChunk.push(file);
+    currentTokens += fileTokens;
+  }
+
+  if (currentChunk.length > 0) {
+    chunks.push(currentChunk);
+  }
+
+  return chunks;
+};
 
 // --- Component ---
 
@@ -117,8 +157,10 @@ const GitHubImportForm = ({ projUid, refetchProject, onClose }: Props) => {
       });
       const data = await res.json();
 
-      if (!res.ok) {
-        const msg = data.error || "Failed to fetch repo tree";
+      if (!res.ok || data.githubRateLimited) {
+        const msg = data.githubRateLimited
+          ? "GitHub API rate limit exceeded. Add a GitHub token above to get 5,000 requests/hour instead of 60."
+          : data.error || "Failed to fetch repo tree";
         setError(msg);
         addLog("error", msg, true);
         setLoading(false);
@@ -239,6 +281,15 @@ const GitHubImportForm = ({ projUid, refetchProject, onClose }: Props) => {
         });
         const fetchData = await fetchRes.json();
 
+        if (fetchData.githubRateLimited) {
+          addLog(
+            "error",
+            `GitHub API rate limit hit while fetching files for "${plan.title}". Add a GitHub token to get 5,000 requests/hour instead of 60.`,
+            true,
+          );
+          break;
+        }
+
         if (!fetchRes.ok) {
           addLog(
             "error",
@@ -263,62 +314,119 @@ const GitHubImportForm = ({ projUid, refetchProject, onClose }: Props) => {
         break;
       }
 
-      // Generate doc with retries
+      // Generate doc (chunked if files are too large for single request)
+      const goodFetchedFiles = fetchedFiles.filter((f) => f.content);
+      const totalFileTokens = goodFetchedFiles.reduce(
+        (sum, f) => sum + estimateTokens(`--- ${f.path} ---\n${f.content}`),
+        0,
+      );
+
+      const fileChunks =
+        totalFileTokens > MAX_FILE_TOKENS_PER_REQUEST
+          ? chunkFilesByBudget(goodFetchedFiles, MAX_FILE_TOKENS_PER_REQUEST)
+          : [goodFetchedFiles];
+
+      if (fileChunks.length > 1) {
+        addLog(
+          "system",
+          `Files too large for single request (~${totalFileTokens.toLocaleString()} tokens). Splitting into ${fileChunks.length} chunks...`,
+        );
+      }
+
       let generated: GeneratedDoc | null = null;
-      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+
+      for (let ci = 0; ci < fileChunks.length; ci++) {
         if (cancelledRef.current) break;
 
-        try {
-          const genRes = await fetch("/api/github-import/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              files: fetchedFiles.filter((f) => f.content),
-              prompt: prompt || undefined,
-              docTitle: plan.title,
-            }),
-          });
-          const genData = await genRes.json();
+        if (fileChunks.length > 1) {
+          addLog(
+            "system",
+            `Generating chunk ${ci + 1}/${fileChunks.length}...`,
+          );
+        }
 
-          if (genRes.status === 429 || genData.rateLimited) {
-            // Rate limited — wait and retry
-            const waitSecs = Math.ceil(RATE_LIMIT_WAIT_MS / 1000);
-            addLog(
-              "system",
-              `Rate limited. Waiting ${waitSecs}s before retry (attempt ${attempt + 1}/${MAX_RETRIES})...`,
-            );
-            await delay(RATE_LIMIT_WAIT_MS);
-            continue;
-          }
+        // Retry loop for this chunk
+        let chunkResult: GeneratedDoc | null = null;
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+          if (cancelledRef.current) break;
 
-          if (!genRes.ok || !genData.result) {
+          try {
+            const genRes = await fetch("/api/github-import/generate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                files: fileChunks[ci],
+                prompt: prompt || undefined,
+                docTitle: plan.title,
+              }),
+            });
+            const genData = await genRes.json();
+
+            if (genRes.status === 429 || genData.rateLimited) {
+              const waitSecs = Math.ceil(RATE_LIMIT_WAIT_MS / 1000);
+              addLog(
+                "system",
+                `Rate limited. Waiting ${waitSecs}s before retry (attempt ${attempt + 1}/${MAX_RETRIES})...`,
+              );
+              await delay(RATE_LIMIT_WAIT_MS);
+              continue;
+            }
+
+            if (genData.tooLarge) {
+              addLog(
+                "error",
+                `Chunk too large (${genData.requestedTokens?.toLocaleString() || "?"} tokens). Skipping.`,
+              );
+              break;
+            }
+
+            if (!genRes.ok || !genData.result) {
+              if (attempt < MAX_RETRIES - 1) {
+                addLog(
+                  "system",
+                  `Generation failed, retrying (${attempt + 1}/${MAX_RETRIES})...`,
+                );
+                await delay(DELAY_BETWEEN_CHUNKS_MS);
+                continue;
+              }
+              addLog(
+                "error",
+                `Failed to generate "${plan.title}": ${genData.error || "Unknown error"}`,
+              );
+              break;
+            }
+
+            chunkResult = genData.result;
+            break;
+          } catch {
             if (attempt < MAX_RETRIES - 1) {
               addLog(
                 "system",
-                `Generation failed, retrying (${attempt + 1}/${MAX_RETRIES})...`,
+                `Network error, retrying (${attempt + 1}/${MAX_RETRIES})...`,
               );
               await delay(DELAY_BETWEEN_CHUNKS_MS);
               continue;
             }
-            addLog(
-              "error",
-              `Failed to generate "${plan.title}": ${genData.error || "Unknown error"}`,
-            );
-            break;
+            addLog("error", `Network error generating "${plan.title}"`);
           }
+        }
 
-          generated = genData.result;
-          break;
-        } catch {
-          if (attempt < MAX_RETRIES - 1) {
-            addLog(
-              "system",
-              `Network error, retrying (${attempt + 1}/${MAX_RETRIES})...`,
-            );
-            await delay(DELAY_BETWEEN_CHUNKS_MS);
-            continue;
+        if (chunkResult) {
+          if (!generated) {
+            // First chunk — use full result (title, tagline, desc, docItems)
+            generated = chunkResult;
+          } else {
+            // Subsequent chunks — merge docItems
+            generated.docItems = [
+              ...(generated.docItems || []),
+              ...(chunkResult.docItems || []),
+            ];
           }
-          addLog("error", `Network error generating "${plan.title}"`);
+        }
+
+        // Delay between file chunks
+        if (ci < fileChunks.length - 1 && !cancelledRef.current) {
+          await delay(DELAY_BETWEEN_CHUNKS_MS);
         }
       }
 

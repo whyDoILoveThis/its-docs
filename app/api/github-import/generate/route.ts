@@ -123,6 +123,20 @@ export async function POST(req: Request) {
           { status: 429 }
         );
       }
+      const errText = data?.error?.message || "";
+      if (errText.includes("Request too large") || errText.includes("tokens per minute")) {
+        const requestedMatch = errText.match(/Requested (\d+)/);
+        const limitMatch = errText.match(/Limit (\d+)/);
+        return NextResponse.json(
+          {
+            error: "Request too large for AI model",
+            tooLarge: true,
+            requestedTokens: requestedMatch ? parseInt(requestedMatch[1]) : null,
+            limit: limitMatch ? parseInt(limitMatch[1]) : 30000,
+          },
+          { status: 413 }
+        );
+      }
       return NextResponse.json(
         { error: data?.error?.message || "AI provider error", providerStatus: status },
         { status: 502 }

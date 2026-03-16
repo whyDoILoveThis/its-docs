@@ -26,6 +26,16 @@ export async function POST(req: Request) {
     const data = await res.json();
 
     if (!res.ok) {
+      // Detect GitHub rate limit
+      if (res.status === 403 && (data.message || "").includes("rate limit")) {
+        return NextResponse.json(
+          {
+            error: "GitHub API rate limit exceeded. Add a GitHub token for higher limits (5,000 req/hr vs 60/hr).",
+            githubRateLimited: true,
+          },
+          { status: 429 }
+        );
+      }
       return NextResponse.json(
         {
           error: data.message || "Failed to fetch repo tree",

@@ -26,6 +26,7 @@ import { toggleScrollLock } from "@/lib/utils";
 import ArrowIcon from "../icons/ArrowIcon";
 import ItsSkeleton from "../ItsSkeleton";
 import AiModifyDocForm from "./AiModifyDocForm";
+import GitHubDocModifyForm from "./GitHubDocModifyForm";
 
 interface Props {
   doc: Doc;
@@ -67,6 +68,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
   );
   const [imgMsg, setImgMsg] = useState("");
   const [showAiModify, setShowAiModify] = useState(false);
+  const [showGitHubModify, setShowGitHubModify] = useState(false);
 
   useEffect(() => {
     if (image !== null) {
@@ -529,6 +531,15 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
             >
               AI
             </li>
+            <li
+              onClick={() => setShowGitHubModify(true)}
+              className={`btn btn-ghost btn-purple text-nowrap ${
+                (editMode && "blur-sm") || (moveMode && "blur-sm")
+              }`}
+              style={{ width: "100%" }}
+            >
+              GitHub Import
+            </li>
           </ItsDropdown>
         </div>
       )}
@@ -914,6 +925,14 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
           doc={doc}
           refetchProjectForDocs={refetchProjectForDocs}
           onClose={() => setShowAiModify(false)}
+        />
+      )}
+      {showGitHubModify && (
+        <GitHubDocModifyForm
+          projUid={projUid}
+          doc={doc}
+          refetchProjectForDocs={refetchProjectForDocs}
+          onClose={() => setShowGitHubModify(false)}
         />
       )}
     </div>
