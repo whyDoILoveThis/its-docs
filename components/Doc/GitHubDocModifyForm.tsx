@@ -613,7 +613,7 @@ Search the entire repo, especially files that might contain this functionality â
         // Retry loop for this chunk
         let chunkSuccess = false;
         for (let attempt = 0; attempt < 3; attempt++) {
-          const res = await fetch("/api/github-import/modify", {
+          const res = await fetch("/api/github-import/intel-modify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -708,6 +708,15 @@ Search the entire repo, especially files that might contain this functionality â
               setLoading(false);
               return;
             }
+          }
+
+          // Show intel diagnostics if available
+          if (data.intel) {
+            const { symbolsIndexed, contextFiles, symbolsFound } = data.intel;
+            addMsg(
+              "system",
+              `Intel: ${symbolsIndexed} symbols indexed, ${contextFiles} files in context${symbolsFound?.length ? ` â€” found: ${symbolsFound.slice(0, 5).join(", ")}` : ""}`,
+            );
           }
 
           if (theMode === "add") {

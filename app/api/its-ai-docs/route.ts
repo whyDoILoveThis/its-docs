@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { extractJSON } from "@/lib/extractJSON";
 
 const SYSTEM_PROMPT = {
   role: "system",
@@ -155,19 +156,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // Extract JSON from the response (handle markdown code fences)
-    let jsonStr = rawReply.trim();
-    const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fenceMatch) {
-      jsonStr = fenceMatch[1].trim();
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonStr);
-    } catch {
+    // Extract JSON from AI response (handles fences, trailing commas, comments, etc.)
+    const { parsed, error: jsonError } = extractJSON(rawReply);
+    if (jsonError || parsed === null) {
       return NextResponse.json(
-        { error: "AI returned invalid JSON", raw: rawReply },
+        { error: "AI returned invalid JSON", detail: jsonError, raw: rawReply },
         { status: 502 }
       );
     }

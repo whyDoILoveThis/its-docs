@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { extractJSON } from "@/lib/extractJSON";
 
 const SYSTEM_PROMPT = {
   role: "system",
@@ -104,21 +105,16 @@ export async function POST(req: Request) {
       );
     }
 
-    let jsonStr = rawReply.trim();
-    const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fenceMatch) {
-      jsonStr = fenceMatch[1].trim();
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonStr);
-    } catch {
+    const { parsed: rawParsed, error: jsonError } = extractJSON(rawReply);
+    if (jsonError || rawParsed === null) {
       return NextResponse.json(
-        { error: "AI returned invalid JSON", raw: rawReply },
+        { error: "AI returned invalid JSON", detail: jsonError, raw: rawReply },
         { status: 502 }
       );
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsed = rawParsed as any;
 
     // Validate structure
     if (!parsed.docPlans || !Array.isArray(parsed.docPlans)) {

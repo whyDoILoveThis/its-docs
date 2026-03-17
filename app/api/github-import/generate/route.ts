@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
+import { extractJSON } from "@/lib/extractJSON";
+import { buildIndex } from "@/lib/repo-intel/symbolIndexer";
+import { buildDependencyGraph } from "@/lib/repo-intel/dependencyGraph";
+import {
+  buildContext,
+  assembleContextText,
+  buildContextSummary,
+} from "@/lib/repo-intel/contextBuilder";
+import { buildEmbeddingIndex } from "@/lib/repo-intel/embeddingEngine";
+import type { RepoFile } from "@/lib/repo-intel/repoScanner";
 
 const SYSTEM_PROMPT = {
   role: "system",
-  content: `You are a documentation generator specializing in creating docs from source code. Given file contents from a repository and instructions, you create structured documentation that explains the code clearly.
+  content: `You are an elite documentation generator powered by deep code intelligence. Given precisely selected source code (including exact function bodies, type definitions, imports, and dependency chains), you create structured documentation that explains the code clearly and accurately.
 
 You MUST respond with valid JSON only. No markdown, no explanation, no text outside the JSON.
 
@@ -29,16 +39,19 @@ STYLE GUIDE:
 - "btn-yellow" = Tips, things to note, dependencies
 - "btn-orange" = Alternative approaches, context, related info
 - "btn-red" = Warnings, common pitfalls, security concerns
-- "code" = Code snippets — include the most important/illustrative parts, not entire files
+- "code" = Code snippets — include the most important/illustrative parts
 
 RULES:
+- ONLY use information that appears in the provided source code. Never invent function names, variable names, imports, behaviors, or any detail not present in the code.
+- The code has been precisely selected using symbol indexing and dependency analysis. Trust this context.
+- When including code snippets, copy them VERBATIM from the provided code. Never paraphrase or pseudo-code.
 - Write like a knowledgeable developer explaining code to a teammate
 - Use a natural mix of styles for visual interest and meaning
-- Include relevant code snippets but keep them focused (key functions, patterns, not entire files)
+- Include relevant code snippets: key functions, patterns, types
 - Section headers should describe what that section covers
-- Be thorough but concise — don't repeat obvious things
+- Be thorough but concise
 - Generate 8-25 items depending on complexity
-- If multiple files are provided, document them cohesively — don't just list each file separately
+- If multiple files are provided, document them cohesively
 - Focus on: what it does, how it works, key patterns, important details
 - ONLY return valid JSON, nothing else`,
 };
@@ -54,21 +67,46 @@ export async function POST(req: Request) {
       );
     }
 
-    // Build file contents string
-    const fileContents = files
+    // Build file contents string using intelligence engine
+    const repoFiles: RepoFile[] = files
       .filter((f: { content: string }) => f.content)
-      .map(
-        (f: { path: string; content: string }) =>
-          `--- ${f.path} ---\n${f.content}`
-      )
-      .join("\n\n");
+      .map((f: { path: string; content: string }) => {
+        const ext = f.path.substring(f.path.lastIndexOf(".")).toLowerCase();
+        const langMap: Record<string, string> = {
+          ".ts": "typescript", ".tsx": "typescript",
+          ".js": "javascript", ".jsx": "javascript",
+          ".py": "python", ".go": "go", ".rs": "rust",
+          ".java": "java", ".css": "css", ".html": "html",
+          ".json": "json", ".yaml": "yaml", ".yml": "yaml",
+          ".md": "markdown",
+        };
+        return {
+          path: f.path,
+          content: f.content,
+          size: f.content.length,
+          language: langMap[ext] || "text",
+        };
+      });
 
-    if (!fileContents.trim()) {
+    if (repoFiles.length === 0) {
       return NextResponse.json(
         { error: "No file contents to document" },
         { status: 400 }
       );
     }
+
+    // Index and build intelligent context with semantic search
+    const repoIndex = buildIndex(repoFiles);
+    const depGraph = buildDependencyGraph(repoIndex);
+    const embeddingIndex = buildEmbeddingIndex(repoIndex);
+    const context = buildContext(
+      prompt || docTitle || "document this code",
+      repoIndex,
+      depGraph,
+      { maxTokens: 18000, includeArchitecture: true, embeddingIndex },
+    );
+    const contextText = assembleContextText(context);
+    const contextSummary = buildContextSummary(context);
 
     let userContent = `Create documentation for the following code files.`;
     if (docTitle) {
@@ -77,7 +115,9 @@ export async function POST(req: Request) {
     if (prompt) {
       userContent += `\nUser instructions: ${prompt}`;
     }
-    userContent += `\n\nSource files:\n${fileContents}`;
+    userContent += `\n\n## Analyzed Source Code (${context.includedFiles.length} files)\n`;
+    userContent += `Intelligence summary: ${contextSummary}\n\n`;
+    userContent += contextText;
 
     const messages = [SYSTEM_PROMPT, { role: "user", content: userContent }];
 
@@ -154,18 +194,10 @@ export async function POST(req: Request) {
       );
     }
 
-    let jsonStr = rawReply.trim();
-    const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fenceMatch) {
-      jsonStr = fenceMatch[1].trim();
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonStr);
-    } catch {
+    const { parsed, error: jsonError } = extractJSON(rawReply);
+    if (jsonError || parsed === null) {
       return NextResponse.json(
-        { error: "AI returned invalid JSON", raw: rawReply },
+        { error: "AI returned invalid JSON", detail: jsonError, raw: rawReply },
         { status: 502 }
       );
     }
