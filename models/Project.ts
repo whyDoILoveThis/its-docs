@@ -7,6 +7,8 @@ interface Project extends Document {
     title: string;
     desc?: string;
     logoUrl?: string;
+    githubOwner?: string;
+    githubRepo?: string;
     docs: Doc[];
 }
 
@@ -46,9 +48,15 @@ creatorUid: { type: String, required: false },
 title: { type: String, required: true },
 desc: { type: String, required: false },
 logoUrl: { type: String, required: false },
+githubOwner: { type: String, required: false },
+githubRepo: { type: String, required: false },
 docs: { type: [DocSchema], default: [], required: true },
 });
 
-// Create and export User model
+// Re-register model in dev so schema changes take effect without restart
+if (process.env.NODE_ENV !== "production" && mongoose.models.Project) {
+  delete mongoose.models.Project;
+}
+
 const Project: Model<Project> = mongoose.models.Project || model<Project>("Project", ProjectSchema);
 export default Project;

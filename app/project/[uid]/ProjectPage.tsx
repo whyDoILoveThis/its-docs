@@ -18,6 +18,7 @@ import MockImage from "@/components/icons/MockImage";
 import { getImageSrc } from "@/lib/supabaseStorage";
 import AiDocForm from "@/components/Doc/AiDocForm";
 import GitHubImportForm from "@/components/Doc/GitHubImportForm";
+import EyeIcon from "@/components/icons/EyeIcon";
 
 interface Props {
   projUid: string;
@@ -35,6 +36,7 @@ const ProjectPage = ({ projUid }: Props) => {
   const [editMode, setEditMode] = useState(false);
   const [selectedUpdate, setSelectedUpdate] = useState(-999);
   const [localDocLinks, setLocalDocLinks] = useState<Doc[]>([]);
+  const [showGitHubInfo, setShowGitHubInfo] = useState(false);
 
   useEffect(() => {
     if (theProject?.docs) {
@@ -262,6 +264,39 @@ const ProjectPage = ({ projUid }: Props) => {
                 />
               )}
             </div>
+            <button
+              onClick={() => setShowGitHubInfo(!showGitHubInfo)}
+              className={`text-gray-400 hover:text-gray-300 transition-opacity text-sm mt-1 ${showGitHubInfo ? "opacity-100" : "opacity-50"}`}
+            >
+              <EyeIcon />
+            </button>
+            {showGitHubInfo && (
+              <div className="flex flex-col">
+                <span className="flex items-center gap-1">
+                  <p className="text-xs text-slate-400">
+                    {theProject?.githubOwner && theProject?.githubRepo
+                      ? `${theProject.githubOwner}/${theProject.githubRepo}`
+                      : "No GitHub repo linked"}
+                  </p>
+                  {editMode && (
+                    <button
+                      onClick={() => setSelectedUpdate(4)}
+                      className="ml-2 btn btn-xs"
+                    >
+                      <EditIcon />
+                    </button>
+                  )}
+                </span>
+                {theProject && editMode && selectedUpdate === 4 && (
+                  <UpdateProjectForm
+                    proj={theProject}
+                    refetchProject={refetchProject}
+                    formType="github"
+                    onCancel={() => setSelectedUpdate(-999)}
+                  />
+                )}
+              </div>
+            )}
           </header>
           <ul className="flex flex-col gap-2">
             {localDocLinks &&
@@ -347,6 +382,8 @@ const ProjectPage = ({ projUid }: Props) => {
               projUid={projUid}
               refetchProject={refetchProject}
               onClose={() => setShowGitHubImport(false)}
+              defaultOwner={theProject?.githubOwner}
+              defaultRepo={theProject?.githubRepo}
             />
           )}
           <p>{theMessage && theMessage}</p>

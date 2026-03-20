@@ -144,6 +144,8 @@ interface Props {
   doc: Doc;
   refetchProjectForDocs: () => void;
   onClose: () => void;
+  defaultOwner?: string;
+  defaultRepo?: string;
 }
 
 const GitHubDocModifyForm = ({
@@ -151,15 +153,22 @@ const GitHubDocModifyForm = ({
   doc,
   refetchProjectForDocs,
   onClose,
+  defaultOwner,
+  defaultRepo,
 }: Props) => {
   const { toast } = useToast();
   const msgEndRef = useRef<HTMLDivElement>(null);
 
   // Repo form state
-  const [owner, setOwner] = useState("");
-  const [repo, setRepo] = useState("");
+  const [owner, setOwner] = useState(defaultOwner || "");
+  const [repo, setRepo] = useState(defaultRepo || "");
   const [branch, setBranch] = useState("main");
-  const [ghToken, setGhToken] = useState("");
+  const [ghToken, setGhToken] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("its-gh-token") || "";
+    }
+    return "";
+  });
 
   // Prompt state
   const [prompt, setPrompt] = useState("");
@@ -970,7 +979,10 @@ Search the entire repo, especially files that might contain this functionality â
                 <input
                   type="password"
                   value={ghToken}
-                  onChange={(e) => setGhToken(e.target.value)}
+                  onChange={(e) => {
+                    setGhToken(e.target.value);
+                    localStorage.setItem("its-gh-token", e.target.value);
+                  }}
                   placeholder="optional"
                   className="input"
                   disabled={loading}

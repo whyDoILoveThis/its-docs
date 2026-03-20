@@ -99,17 +99,30 @@ interface Props {
   projUid: string;
   refetchProject: () => void;
   onClose: () => void;
+  defaultOwner?: string;
+  defaultRepo?: string;
 }
 
-const GitHubImportForm = ({ projUid, refetchProject, onClose }: Props) => {
+const GitHubImportForm = ({
+  projUid,
+  refetchProject,
+  onClose,
+  defaultOwner,
+  defaultRepo,
+}: Props) => {
   const { toast } = useToast();
   const logEndRef = useRef<HTMLDivElement>(null);
 
   // Form state
-  const [owner, setOwner] = useState("");
-  const [repo, setRepo] = useState("");
+  const [owner, setOwner] = useState(defaultOwner || "");
+  const [repo, setRepo] = useState(defaultRepo || "");
   const [branch, setBranch] = useState("main");
-  const [ghToken, setGhToken] = useState("");
+  const [ghToken, setGhToken] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("its-gh-token") || "";
+    }
+    return "";
+  });
   const [prompt, setPrompt] = useState("");
 
   // Process state
@@ -634,7 +647,10 @@ const GitHubImportForm = ({ projUid, refetchProject, onClose }: Props) => {
               <input
                 type="password"
                 value={ghToken}
-                onChange={(e) => setGhToken(e.target.value)}
+                onChange={(e) => {
+                  setGhToken(e.target.value);
+                  localStorage.setItem("its-gh-token", e.target.value);
+                }}
                 placeholder="optional"
                 className="input"
                 disabled={loading}

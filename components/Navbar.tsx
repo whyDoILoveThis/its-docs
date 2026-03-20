@@ -43,13 +43,13 @@ const Navbar = () => {
       <nav className="fixed top-0 left-0 right-0 flex items-center justify-between px-2 border-b backdrop-blur-md zz-top">
         <Link href="/" className="flex items-center gap-0.5">
           <Image
-            src={"/LOGODOCS.png"}
+            src={"/screenshot-1773695712666-transparent (1).png"}
             alt={""}
-            className="h-auto"
+            className="p-2"
             width={50}
             height={50}
           />
-          <b className="text-2xl">ItsDocs</b>
+          <b className="text-2xl font-thin letter-spacing-lg">ITS Docs</b>
         </Link>
         <div className="flex items-center gap-2">
           <button

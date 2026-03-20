@@ -933,6 +933,8 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
           doc={doc}
           refetchProjectForDocs={refetchProjectForDocs}
           onClose={() => setShowGitHubModify(false)}
+          defaultOwner={theProject?.githubOwner}
+          defaultRepo={theProject?.githubRepo}
         />
       )}
     </div>

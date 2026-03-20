@@ -99,6 +99,42 @@ a {
   }
 }
 
+
+.letter-spacing-1 {
+  letter-spacing: 0.1em;
+}
+
+.letter-spacing-2 {
+  letter-spacing: 0.2em;
+}
+
+.letter-spacing-xs {
+  letter-spacing: 0.05em;
+}
+
+.letter-spacing-sm {
+  letter-spacing: 0.1em;
+}
+.letter-spacing-md {
+  letter-spacing: 0.15em;
+}
+
+.letter-spacing-lg {
+  letter-spacing: 0.2em;
+}
+
+.letter-spacing-xl {
+  letter-spacing: 0.25em;
+}
+
+.letter-spacing-2xl {
+  letter-spacing: 0.3em;
+}
+
+.letter-spacing-3xl {
+  letter-spacing: 0.35em;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -169,3 +205,5 @@ a {
 }
 
 }
+
+

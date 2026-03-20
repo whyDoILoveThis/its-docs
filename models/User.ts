@@ -36,6 +36,10 @@ const UserSchema = new Schema<User>({
   },
 });
 
-// Create and export User model
+// Re-register model in dev so schema changes take effect without restart
+if (process.env.NODE_ENV !== "production" && mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
 const User: Model<User> = mongoose.models.User || model<User>("User", UserSchema);
 export default User;

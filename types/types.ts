@@ -19,6 +19,8 @@ declare global {
         title: string;
         desc?: string;
         logoUrl?: string;
+        githubOwner?: string;
+        githubRepo?: string;
         docs?: Doc[];
     }
     

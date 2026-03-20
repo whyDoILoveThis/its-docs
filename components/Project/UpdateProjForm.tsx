@@ -24,6 +24,8 @@ const UpdateProjectForm = ({
     title: proj.title || "",
     desc: proj.desc || "",
     logoUrl: proj.logoUrl || "",
+    githubOwner: proj.githubOwner || "",
+    githubRepo: proj.githubRepo || "",
   });
 
   const [message, setMessage] = useState<string | null>(null);
@@ -159,6 +161,27 @@ const UpdateProjectForm = ({
               setFormData((prev) => ({ ...prev, birth: date }))
             }
           />
+        );
+      case "github":
+        return (
+          <div className="flex flex-col gap-2">
+            <input
+              type="text"
+              name="githubOwner"
+              placeholder="GitHub Username"
+              value={formData.githubOwner}
+              onChange={handleChange}
+              className="input w-full"
+            />
+            <input
+              type="text"
+              name="githubRepo"
+              placeholder="Repository Name"
+              value={formData.githubRepo}
+              onChange={handleChange}
+              className="input w-full"
+            />
+          </div>
         );
       default:
         return null;
