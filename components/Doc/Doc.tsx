@@ -27,6 +27,8 @@ import ArrowIcon from "../icons/ArrowIcon";
 import ItsSkeleton from "../ItsSkeleton";
 import AiModifyDocForm from "./AiModifyDocForm";
 import GitHubDocModifyForm from "./GitHubDocModifyForm";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { updateCachedProject } from "@/hooks/useOfflineStore";
 
 interface Props {
   doc: Doc;
@@ -42,6 +44,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
     text: "",
   });
   const { userId } = useAuth();
+  const { offlineFetch } = useOfflineFetch();
   const [moveMode, setMoveMode] = useState(false); // Toggle move item mode
   const [editMode, setEditMode] = useState(false);
   const [addMode, setAddMode] = useState(false);
@@ -159,14 +162,15 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
     updatedDoc: Doc,
   ) => {
     try {
-      const response = await axios.put("/api/updateDoc", {
-        projUid,
-        docId,
-        updatedDoc,
+      const result = await offlineFetch({
+        label: `Update doc "${updatedDoc.title}"`,
+        method: "PUT",
+        url: "/api/updateDoc",
+        body: { projUid, docId, updatedDoc },
       });
 
-      console.log("✅ Document updated successfully:", response.data);
-      return response.data;
+      console.log("✅ Document updated successfully:", result?.data);
+      return result?.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("❌ Axios error:", error.response?.data || error.message);
@@ -197,16 +201,24 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
 
       setImgMsg("Finalizing changes...");
 
-      const response = await fetch("/api/updateDocItems", {
+      const itemsResult = await offlineFetch({
+        label: `Update doc items in "${doc.title}"`,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projUid,
-          docUid: doc.uid,
-          docItems: updatedDocItems, // Use the merged array
-        }),
+        url: "/api/updateDocItems",
+        body: { projUid, docUid: doc.uid, docItems: updatedDocItems },
       });
-      console.log(response);
+
+      if (!itemsResult) {
+        // Offline — optimistically update cache
+        updateCachedProject(projUid, (p) => ({
+          ...p,
+          docs: p.docs?.map((d) =>
+            d.uid === doc.uid
+              ? { ...localDoc, docItems: updatedDocItems as DocItem[] }
+              : d,
+          ),
+        }));
+      }
 
       refetchProjectForDocs();
       toggleScrollLock(false);
@@ -235,12 +247,24 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
     }
 
     try {
-      const response = await fetch("/api/addDocItem", {
+      const result = await offlineFetch({
+        label: `Add item to "${doc.title}"`,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projUid, docUid: doc.uid, docItem: payload }),
+        url: "/api/addDocItem",
+        body: { projUid, docUid: doc.uid, docItem: payload },
       });
-      console.log(response);
+
+      if (!result) {
+        // Offline — optimistically add to cache
+        updateCachedProject(projUid, (p) => ({
+          ...p,
+          docs: p.docs?.map((d) =>
+            d.uid === doc.uid
+              ? { ...d, docItems: [...(d.docItems || []), payload] }
+              : d,
+          ),
+        }));
+      }
 
       refetchProjectForDocs();
     } catch (error) {
@@ -259,17 +283,21 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
       if (confirmedAgain) {
         setLoadingDelete(true);
         try {
-          const response = await axios.delete("/api/deleteDoc", {
-            data: {
-              projUid,
-              docId: doc.uid,
-            },
+          const result = await offlineFetch({
+            label: `Delete doc "${doc.title}"`,
+            method: "DELETE",
+            url: "/api/deleteDoc",
+            body: { projUid, docId: doc.uid },
           });
 
-          if (response.status === 200) {
-            console.log("✅ Doc deleted successfully:", response.data.message);
-            // Optionally update your UI or state here
+          if (!result) {
+            // Offline — optimistically remove from cache
+            updateCachedProject(projUid, (p) => ({
+              ...p,
+              docs: p.docs?.filter((d) => d.uid !== doc.uid),
+            }));
           }
+
           refetchProjectForDocs();
           setLoading(false);
         } catch (error) {
@@ -589,7 +617,7 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
       {/** SAVE BTN */}
       {(moveMode || editMode) && (
         <button
-          className="btn btn-green fixed bottom-2 backdrop-blur-md z-10 place-self-end-fix"
+          className="btn btn-green fixed bottom-2 left-2 backdrop-blur-md z-10"
           onClick={saveUpdatedDocItems}
           disabled={loading}
         >

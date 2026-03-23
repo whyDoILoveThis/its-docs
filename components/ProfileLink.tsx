@@ -17,7 +17,11 @@ export default function Home() {
   const checkUser = async (uid: string) => {
     try {
       setLoading(true);
-      const response = await axios.post("/api/checkUserExists", { uid });
+      const response = await axios.post(
+        "/api/checkUserExists",
+        { uid },
+        { timeout: 10_000 },
+      );
       const data = response.data;
 
       if (data.user) {
@@ -37,12 +41,16 @@ export default function Home() {
     if (!user) return;
     try {
       setLoading(true);
-      const response = await axios.post("/api/saveUser", {
-        uid: userId,
-        fullName: user.fullName,
-        firstName: user.firstName,
-        email: user.emailAddresses[0].emailAddress,
-      });
+      const response = await axios.post(
+        "/api/saveUser",
+        {
+          uid: userId,
+          fullName: user.fullName,
+          firstName: user.firstName,
+          email: user.emailAddresses[0].emailAddress,
+        },
+        { timeout: 10_000 },
+      );
 
       const savedUser = response.data;
       console.log("✅ User saved:", savedUser);

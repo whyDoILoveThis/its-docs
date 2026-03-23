@@ -6,6 +6,13 @@ import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import UpdateProfileForm from "@/components/Profile/UpdateProfileForm";
 import ItsDropdown from "@/components/ItsDropdown";
 import EditIcon from "@/components/icons/EditIcon";
+import {
+  cacheProject,
+  getCachedProjectsByCreator,
+  useOfflineStore,
+} from "@/hooks/useOfflineStore";
+
+const FETCH_TIMEOUT = 10_000;
 
 interface Props {
   userUid: string;
@@ -18,9 +25,18 @@ const ProfilePage = ({ userUid }: Props) => {
   const [showSettings, setShowSettings] = useState(false);
 
   const checkUser = async (uid: string) => {
+    const { isOnline } = useOfflineStore.getState();
+    if (!isOnline) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
-      const response = await axios.post("/api/checkUserExists", { uid });
+      const response = await axios.post(
+        "/api/checkUserExists",
+        { uid },
+        { timeout: FETCH_TIMEOUT },
+      );
       const data = response.data;
 
       if (data.user) {
@@ -36,10 +52,22 @@ const ProfilePage = ({ userUid }: Props) => {
   };
 
   const fetchProjectsByCreator = async (creatorUid: string) => {
+    // If already known offline, skip network and use cache
+    const { isOnline, goOffline } = useOfflineStore.getState();
+    if (!isOnline) {
+      const cached = getCachedProjectsByCreator(creatorUid);
+      if (cached.length > 0) {
+        setProjects(cached);
+      }
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await axios.get(
-        `/api/getProjectsByCreatorUid?creatorUid=${creatorUid}`
+        `/api/getProjectsByCreatorUid?creatorUid=${creatorUid}`,
+        { timeout: FETCH_TIMEOUT },
       );
       const projects = response.data.projects;
       const message = response.data.message;
@@ -47,12 +75,22 @@ const ProfilePage = ({ userUid }: Props) => {
 
       console.log(projects);
 
+      // Cache each project for offline use
+      if (projects) {
+        projects.forEach((p: Project) => cacheProject(p));
+      }
+
       setProjects(projects);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching projects:", error);
+      goOffline();
+      // Fall back to cached projects
+      const cached = getCachedProjectsByCreator(creatorUid);
+      if (cached.length > 0) {
+        setProjects(cached);
+      }
       setLoading(false);
-      throw error;
     }
   };
 

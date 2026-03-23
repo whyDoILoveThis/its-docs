@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import { useAuth } from "@clerk/clerk-react";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
 
 interface Props {
   field: string;
@@ -15,9 +16,10 @@ const UpdateProfileForm = ({ field, value, onCancel, onSave }: Props) => {
   const [formData, setFormData] = useState(value);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const { offlineFetch } = useOfflineFetch();
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData(e.target.value);
   };
@@ -27,13 +29,14 @@ const UpdateProfileForm = ({ field, value, onCancel, onSave }: Props) => {
     setLoading(true);
 
     try {
-      const response = await axios.put("/api/updateUserProfile", {
-        field,
-        value: formData,
-        userUid: userId,
+      await offlineFetch({
+        label: `Update profile ${field}`,
+        method: "PUT",
+        url: "/api/updateUserProfile",
+        body: { field, value: formData, userUid: userId },
       });
 
-      setMessage(response.data.message || "Profile updated successfully!");
+      setMessage("Profile updated successfully!");
       setLoading(false);
       onSave();
       onCancel();

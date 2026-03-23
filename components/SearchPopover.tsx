@@ -16,7 +16,9 @@ const SearchPopover = ({ onClose }: Props) => {
   const handleSearch = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`/api/search?term=${searchQuery}`);
+      const response = await axios.get(`/api/search?term=${searchQuery}`, {
+        timeout: 10_000,
+      });
       setSearchResults(response.data.projects);
       setLoading(false);
     } catch (error) {

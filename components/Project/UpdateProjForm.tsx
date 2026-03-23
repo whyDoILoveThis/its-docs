@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import ItsDatePicker from "../ItsDatePicker";
 import LoaderSpinSmall from "../LoaderSpinSmall";
 import ItsFileInput from "../ItsFileInput";
 import { fbUploadImage, fbDeleteImage } from "@/lib/supabaseStorage";
 import Image from "next/image";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { updateCachedProject } from "@/hooks/useOfflineStore";
 
 interface Props {
   refetchProject: () => void;
@@ -34,6 +35,7 @@ const UpdateProjectForm = ({
   const [imageUrl, setImageUrl] = useState<string>("");
 
   const [removeLogo, setRemoveLogo] = useState(false);
+  const { offlineFetch } = useOfflineFetch();
 
   useEffect(() => {
     setFormData((prev) => ({ ...prev, birth: proj.birth }));
@@ -89,12 +91,19 @@ const UpdateProjectForm = ({
     }
 
     try {
-      const response = await axios.put("/api/updateProject", {
-        projUid: proj.uid,
-        updates,
+      const result = await offlineFetch({
+        label: `Update project ${formType}`,
+        method: "PUT",
+        url: "/api/updateProject",
+        body: { projUid: proj.uid, updates },
       });
 
-      setMessage(response.data.message || "Project updated successfully!");
+      if (!result) {
+        // Offline — optimistically update cache
+        updateCachedProject(proj.uid, (p) => ({ ...p, ...updates }));
+      }
+
+      setMessage("Project updated successfully!");
       setLoading(false);
       refetchProject();
       onCancel();

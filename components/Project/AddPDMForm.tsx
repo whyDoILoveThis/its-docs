@@ -1,6 +1,8 @@
 "use client";
 import LoaderSpinner from "@/components/LoaderSpinner";
 import { useToast } from "@/hooks/use-toast";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { updateCachedProject } from "@/hooks/useOfflineStore";
 import React, { useState } from "react";
 import { v4 } from "uuid";
 
@@ -14,6 +16,7 @@ const AddPDMForm = ({ projUid, refetchProject }: Props) => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { offlineFetch } = useOfflineFetch();
 
   const handleAddDiagram = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,10 +24,11 @@ const AddPDMForm = ({ projUid, refetchProject }: Props) => {
 
     setLoading(true);
     try {
-      const response = await fetch("/api/addPDM", {
+      const result = await offlineFetch({
+        label: `Add diagram "${title.trim()}"`,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        url: "/api/addPDM",
+        body: {
           projUid,
           diagram: {
             uid: v4(),
@@ -33,14 +37,34 @@ const AddPDMForm = ({ projUid, refetchProject }: Props) => {
             nodes: [],
             edges: [],
           },
-        }),
+        },
       });
 
-      const data = await response.json();
-      setMessage(data.message || data.error);
+      if (!result) {
+        // Offline — optimistically add diagram to cache
+        updateCachedProject(projUid, (p) => ({
+          ...p,
+          pdmDiagrams: [
+            ...(p.pdmDiagrams || []),
+            {
+              uid: v4(),
+              title: title.trim(),
+              orientation: "horizontal" as const,
+              nodes: [],
+              edges: [],
+            },
+          ],
+        }));
+      }
+
+      const data = result?.data;
+      setMessage(data?.message || data?.error || "Queued offline");
       setLoading(false);
       refetchProject();
-      toast({ title: "Diagram created", variant: "green" });
+      toast({
+        title: result ? "Diagram created" : "Diagram queued offline",
+        variant: result ? "green" : "blue",
+      });
     } catch (error) {
       console.error("❌ An error occurred:", error);
       setLoading(false);

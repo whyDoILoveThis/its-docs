@@ -7,8 +7,9 @@ import React, {
   useEffect,
 } from "react";
 import { useAuth } from "@clerk/nextjs";
-import axios from "axios";
 import { v4 } from "uuid";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { updateCachedProject } from "@/hooks/useOfflineStore";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import { useToast } from "@/hooks/use-toast";
 import { useConfirm } from "@/components/ItsConfirmProvider";
@@ -132,6 +133,7 @@ const PDMDiagram = ({
   const { userId } = useAuth();
   const { toast } = useToast();
   const { ItsConfirm } = useConfirm();
+  const { offlineFetch } = useOfflineFetch();
   const isOwner = userId === theProject.creatorUid;
 
   const [nodes, setNodes] = useState<PDMNode[]>(diagram.nodes || []);
@@ -323,7 +325,9 @@ const PDMDiagram = ({
     }
   };
 
-  const removeColorFromHistory = (color: string) => {
+  const removeColorFromHistory = async (color: string) => {
+    const confirmed = await ItsConfirm("Remove this color from history?");
+    if (!confirmed) return;
     setColorHistory((prev) => prev.filter((c) => c !== color));
   };
 
@@ -399,18 +403,33 @@ const PDMDiagram = ({
 
   const handleSave = async () => {
     setSaving(true);
-    try {
-      await axios.put("/api/updatePDM", {
+    const result = await offlineFetch({
+      label: `Save diagram "${title}"`,
+      method: "PUT",
+      url: "/api/updatePDM",
+      body: {
         projUid,
         diagramUid: diagram.uid,
         updates: { nodes, edges, orientation, title },
-      });
+      },
+    });
+    if (result) {
       setHasChanges(false);
       refetchProject();
       toast({ title: "Diagram saved", variant: "green" });
-    } catch (error) {
-      console.error("Error saving diagram:", error);
-      toast({ title: "Failed to save", variant: "destructive" });
+    } else {
+      // Offline — optimistically update cache
+      updateCachedProject(projUid, (p) => ({
+        ...p,
+        pdmDiagrams: p.pdmDiagrams?.map((d) =>
+          d.uid === diagram.uid
+            ? { ...d, nodes, edges, orientation, title }
+            : d,
+        ),
+      }));
+      setHasChanges(false);
+      refetchProject();
+      toast({ title: "Diagram queued offline", variant: "blue" });
     }
     setSaving(false);
   };
@@ -419,16 +438,27 @@ const PDMDiagram = ({
     const confirmed = await ItsConfirm("Delete this diagram?");
     if (!confirmed) return;
 
-    try {
-      await axios.delete("/api/deletePDM", {
-        data: { projUid, diagramUid: diagram.uid },
-      });
-      refetchProject();
-      onDelete();
-      toast({ title: "Diagram deleted", variant: "green" });
-    } catch (error) {
-      console.error("Error deleting diagram:", error);
+    const result = await offlineFetch({
+      label: `Delete diagram "${title}"`,
+      method: "DELETE",
+      url: "/api/deletePDM",
+      body: { projUid, diagramUid: diagram.uid },
+    });
+
+    if (!result) {
+      // Offline — optimistically remove from cache
+      updateCachedProject(projUid, (p) => ({
+        ...p,
+        pdmDiagrams: p.pdmDiagrams?.filter((d) => d.uid !== diagram.uid),
+      }));
     }
+
+    refetchProject();
+    onDelete();
+    toast({
+      title: result ? "Diagram deleted" : "Delete queued offline",
+      variant: result ? "green" : "blue",
+    });
   };
 
   const deselect = () => {
@@ -847,6 +877,21 @@ const PDMDiagram = ({
                     handleNodeClick(node.uid);
                   }}
                 >
+                  {isSelected && (
+                    <rect
+                      x={pos.x - 3}
+                      y={pos.y - 3}
+                      width={NODE_WIDTH + 6}
+                      height={NODE_HEIGHT + 6}
+                      rx={10}
+                      ry={10}
+                      fill="none"
+                      stroke="#4ade80"
+                      strokeOpacity={0.7}
+                      strokeWidth={2}
+                      style={{ transition: "all 0.15s" }}
+                    />
+                  )}
                   <rect
                     x={pos.x}
                     y={pos.y}
@@ -855,10 +900,10 @@ const PDMDiagram = ({
                     rx={8}
                     ry={8}
                     fill={color}
-                    fillOpacity={isSelected ? 0.25 : isConnecting ? 0.2 : 0.12}
+                    fillOpacity={0.3}
                     stroke={color}
-                    strokeOpacity={isSelected ? 0.8 : isConnecting ? 0.6 : 0.3}
-                    strokeWidth={isSelected ? 2 : 1}
+                    strokeOpacity={0.7}
+                    strokeWidth={1}
                     style={{ transition: "all 0.15s" }}
                   />
                   <text

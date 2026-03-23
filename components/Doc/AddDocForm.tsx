@@ -3,6 +3,8 @@ import LoaderSpinner from "@/components/LoaderSpinner";
 import { useToast } from "@/hooks/use-toast";
 import React, { useState } from "react";
 import { v4 } from "uuid";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { updateCachedProject } from "@/hooks/useOfflineStore";
 
 interface Props {
   projUid: string;
@@ -20,25 +22,35 @@ const AddDocForm = ({ projUid, refetchProject }: Props) => {
   const [loading, setLoading] = useState(false);
   const uniqueId = v4();
   const { toast } = useToast();
+  const { offlineFetch } = useOfflineFetch();
 
   const handleAddDoc = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setLoading(true);
     try {
-      const response = await fetch("/api/addDoc", {
+      const result = await offlineFetch({
+        label: `Add doc "${formData.title}"`,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projUid, doc: formData }),
+        url: "/api/addDoc",
+        body: { projUid, doc: formData },
       });
 
-      const data = await response.json();
-      setMessage(data.message || data.error);
+      if (!result) {
+        // Offline — optimistically add doc to cache
+        updateCachedProject(projUid, (p) => ({
+          ...p,
+          docs: [...(p.docs || []), { ...formData, uid: uniqueId }],
+        }));
+      }
+
+      const data = result?.data;
+      setMessage(data?.message || data?.error || "Queued offline");
       setLoading(false);
       refetchProject();
       toast({
-        title: "New doc added",
-        variant: "green",
+        title: result ? "New doc added" : "Doc queued offline",
+        variant: result ? "green" : "blue",
       });
     } catch (error) {
       console.error("❌ An error occurred:", error);
@@ -49,7 +61,7 @@ const AddDocForm = ({ projUid, refetchProject }: Props) => {
   const handleChange = (
     e:
       | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<HTMLTextAreaElement>
+      | React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
     setFormData({
       ...formData,

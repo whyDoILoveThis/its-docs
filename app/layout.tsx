@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/Theme/theme-provider";
 import { ItsConfirmProvider } from "@/components/ItsConfirmProvider";
 import { Toaster } from "@/components/ui/toaster";
 import Navbar from "@/components/Navbar";
+import OfflineToast from "@/components/OfflineToast";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -49,6 +50,7 @@ export default function RootLayout({
                 {children}
               </div>
               <Toaster />
+              <OfflineToast />
             </ThemeProvider>
           </ItsConfirmProvider>
         </ClerkProvider>

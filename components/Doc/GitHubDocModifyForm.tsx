@@ -5,6 +5,8 @@ import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import { useToast } from "@/hooks/use-toast";
 import CloseIcon from "@/components/icons/CloseIcon";
 import ItsCode from "@/components/ItsCode";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { updateCachedProject } from "@/hooks/useOfflineStore";
 
 // --- Types ---
 
@@ -157,6 +159,7 @@ const GitHubDocModifyForm = ({
   defaultRepo,
 }: Props) => {
   const { toast } = useToast();
+  const { offlineFetch } = useOfflineFetch();
   const msgEndRef = useRef<HTMLDivElement>(null);
 
   // Repo form state
@@ -842,19 +845,24 @@ Search the entire repo, especially files that might contain this functionality â
     setError("");
 
     try {
-      const saveRes = await fetch("/api/updateDocItems", {
+      const saveRes = await offlineFetch({
+        label: `Save GitHub changes to "${doc.title}"`,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projUid,
-          docUid: doc.uid,
-          docItems: currentItems,
-        }),
+        url: "/api/updateDocItems",
+        body: { projUid, docUid: doc.uid, docItems: currentItems },
       });
 
-      if (!saveRes.ok) {
-        const saveData = await saveRes.json();
-        setError(saveData.error || "Failed to save");
+      if (!saveRes) {
+        // Offline â€” optimistically update cache
+        updateCachedProject(projUid, (p) => ({
+          ...p,
+          docs: p.docs?.map((d) =>
+            d.uid === doc.uid ? { ...d, docItems: currentItems } : d,
+          ),
+        }));
+        toast({ title: "Changes queued offline", variant: "blue" });
+        refetchProjectForDocs();
+        onClose();
         setSaving(false);
         return;
       }

@@ -5,6 +5,8 @@ import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import { useToast } from "@/hooks/use-toast";
 import CloseIcon from "@/components/icons/CloseIcon";
 import ItsCode from "@/components/ItsCode";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { updateCachedProject } from "@/hooks/useOfflineStore";
 
 interface DocOperation {
   type: "replace" | "insert_after" | "delete";
@@ -96,6 +98,7 @@ const AiModifyDocForm = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
+  const { offlineFetch } = useOfflineFetch();
 
   // Version history — index 0 is always the original doc items
   const [history, setHistory] = useState<DocItem[][]>([doc.docItems || []]);
@@ -245,19 +248,24 @@ const AiModifyDocForm = ({
     setError("");
 
     try {
-      const saveRes = await fetch("/api/updateDocItems", {
+      const saveRes = await offlineFetch({
+        label: `Save AI changes to "${doc.title}"`,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projUid,
-          docUid: doc.uid,
-          docItems: currentItems,
-        }),
+        url: "/api/updateDocItems",
+        body: { projUid, docUid: doc.uid, docItems: currentItems },
       });
 
-      if (!saveRes.ok) {
-        const saveData = await saveRes.json();
-        setError(saveData.error || "Failed to save");
+      if (!saveRes) {
+        // Offline — optimistically update cache
+        updateCachedProject(projUid, (p) => ({
+          ...p,
+          docs: p.docs?.map((d) =>
+            d.uid === doc.uid ? { ...d, docItems: currentItems } : d,
+          ),
+        }));
+        toast({ title: "AI changes queued offline", variant: "blue" });
+        refetchProjectForDocs();
+        onClose();
         setSaving(false);
         return;
       }

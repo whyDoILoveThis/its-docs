@@ -22,6 +22,15 @@ import EyeIcon from "@/components/icons/EyeIcon";
 import PDMLink from "@/components/Project/PDMLink";
 import PDMDiagram from "@/components/Project/PDMDiagram";
 import AddPDMForm from "@/components/Project/AddPDMForm";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import {
+  cacheProject,
+  getCachedProject,
+  updateCachedProject,
+  useOfflineStore,
+} from "@/hooks/useOfflineStore";
+
+const FETCH_TIMEOUT = 10_000;
 
 interface Props {
   projUid: string;
@@ -29,6 +38,8 @@ interface Props {
 
 const ProjectPage = ({ projUid }: Props) => {
   const { userId } = useAuth();
+  const { offlineFetch } = useOfflineFetch();
+  const goOffline = useOfflineStore((s) => s.goOffline);
   const [theProject, setTheProject] = useState<Project | null>(null);
   const [addingDoc, setAddingDoc] = useState(false);
   const [showAiForm, setShowAiForm] = useState(false);
@@ -72,12 +83,22 @@ const ProjectPage = ({ projUid }: Props) => {
   const saveReorderedDocs = async () => {
     setLoading(true);
     try {
-      const response = await axios.put("/api/updateDocs", {
-        projUid: theProject?.uid,
-        docs: localDocLinks,
+      const result = await offlineFetch({
+        label: "Reorder docs",
+        method: "PUT",
+        url: "/api/updateDocs",
+        body: { projUid: theProject?.uid, docs: localDocLinks },
       });
 
-      setTheMessage(response.data.message || "Docs updated successfully!");
+      if (!result && theProject) {
+        // Offline — optimistically update cache
+        updateCachedProject(theProject.uid, (p) => ({
+          ...p,
+          docs: localDocLinks,
+        }));
+      }
+
+      setTheMessage(result?.data?.message || "Docs updated successfully!");
       refetchProject();
       setEditMode(false);
       setLoading(false);
@@ -89,14 +110,43 @@ const ProjectPage = ({ projUid }: Props) => {
   };
 
   const fetchProjectByUid = async (projUid: string) => {
+    // If already known offline, skip network and use cache immediately
+    const { isOnline } = useOfflineStore.getState();
+    if (!isOnline) {
+      const cached = getCachedProject(projUid);
+      if (cached) {
+        setTheProject(cached);
+        if (selectedDoc) {
+          setSelectedDoc(
+            cached.docs?.find((doc: Doc) => doc.uid === selectedDoc.uid) ||
+              null,
+          );
+        }
+        if (selectedPDM) {
+          setSelectedPDM(
+            cached.pdmDiagrams?.find(
+              (d: PDMDiagram) => d.uid === selectedPDM.uid,
+            ) || null,
+          );
+        }
+        setTheMessage("Loaded from cache (offline)");
+      }
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await axios.get(
         `/api/getProjectByUid?projUid=${projUid}`,
+        { timeout: FETCH_TIMEOUT },
       );
 
       const project = response.data.project;
       const message = response.data.message;
+
+      // Cache for offline use
+      if (project) cacheProject(project);
 
       setTheMessage(message);
       setTheProject(project);
@@ -115,17 +165,79 @@ const ProjectPage = ({ projUid }: Props) => {
       setEditMode(false);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching projects:", error);
+      console.error("Error fetching project:", error);
+      goOffline();
+      // Fall back to cached version
+      const cached = getCachedProject(projUid);
+      if (cached) {
+        setTheProject(cached);
+        if (selectedDoc) {
+          setSelectedDoc(
+            cached.docs?.find((doc: Doc) => doc.uid === selectedDoc.uid) ||
+              null,
+          );
+        }
+        if (selectedPDM) {
+          setSelectedPDM(
+            cached.pdmDiagrams?.find(
+              (d: PDMDiagram) => d.uid === selectedPDM.uid,
+            ) || null,
+          );
+        }
+        setTheMessage("Loaded from cache (offline)");
+      }
       setLoading(false);
     }
   };
 
+  // Apply a local-only project update (for offline optimistic changes)
+  const applyLocalProjectUpdate = (updater: (project: Project) => Project) => {
+    if (!theProject) return;
+    const updated = updater(theProject);
+    setTheProject(updated);
+    cacheProject(updated);
+    if (selectedDoc) {
+      setSelectedDoc(
+        updated.docs?.find((doc: Doc) => doc.uid === selectedDoc.uid) || null,
+      );
+    }
+    if (selectedPDM) {
+      setSelectedPDM(
+        updated.pdmDiagrams?.find(
+          (d: PDMDiagram) => d.uid === selectedPDM.uid,
+        ) || null,
+      );
+    }
+  };
+
   const refetchProject = async () => {
+    // If offline, just reload from cache (instant, no spinner)
+    const { isOnline } = useOfflineStore.getState();
+    if (!isOnline) {
+      const cached = getCachedProject(projUid);
+      if (cached) {
+        setTheProject(cached);
+        if (selectedDoc) {
+          setSelectedDoc(
+            cached.docs?.find((doc: Doc) => doc.uid === selectedDoc.uid) ||
+              null,
+          );
+        }
+        if (selectedPDM) {
+          setSelectedPDM(
+            cached.pdmDiagrams?.find(
+              (d: PDMDiagram) => d.uid === selectedPDM.uid,
+            ) || null,
+          );
+        }
+      }
+      return;
+    }
     await fetchProjectByUid(projUid);
   };
 
   const refetchProjectForDocs = async () => {
-    await fetchProjectByUid(projUid);
+    await refetchProject();
     setTimeout(() => {
       window.scrollTo({ top: document.body.scrollHeight });
     }, 300);
@@ -278,9 +390,9 @@ const ProjectPage = ({ projUid }: Props) => {
             </div>
             <button
               onClick={() => setShowGitHubInfo(!showGitHubInfo)}
-              className={`text-gray-400 hover:text-gray-300 transition-opacity text-sm mt-1 ${showGitHubInfo ? "opacity-100" : "opacity-50"}`}
+              className={`flex items-center gap-0.5 text-gray-400 hover:text-gray-300 transition-opacity text-sm mt-1 ${showGitHubInfo ? "opacity-100" : "opacity-50"}`}
             >
-              <EyeIcon />
+              <EyeIcon /> Github info
             </button>
             {showGitHubInfo && (
               <div className="flex flex-col">

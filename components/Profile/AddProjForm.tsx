@@ -6,6 +6,8 @@ import { fbUploadImage } from "@/lib/supabaseStorage";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { v4 } from "uuid";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { cacheProject } from "@/hooks/useOfflineStore";
 
 interface Props {
   refetchProjects: () => void;
@@ -28,6 +30,7 @@ const AddProjForm = ({ refetchProjects }: Props) => {
   const [loading, setLoading] = useState(false);
   const creatorUid = dbUser?.uid || "";
   const uniqueId = v4();
+  const { offlineFetch } = useOfflineFetch();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -61,14 +64,20 @@ const AddProjForm = ({ refetchProjects }: Props) => {
 
       console.log(projPayload);
 
-      const response = await fetch("/api/addProject", {
+      const result = await offlineFetch({
+        label: `Add project "${projPayload.title}"`,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userUid: dbUser.uid, project: projPayload }),
+        url: "/api/addProject",
+        body: { userUid: dbUser.uid, project: projPayload },
       });
 
-      const data = await response.json();
-      setMessage(data.message || data.error);
+      if (!result) {
+        // Offline — optimistically cache the new project
+        cacheProject(projPayload as Project);
+      }
+
+      const data = result?.data;
+      setMessage(data?.message || data?.error || "Queued offline");
       setLoading(false);
       refetchProjects();
     } catch (error) {

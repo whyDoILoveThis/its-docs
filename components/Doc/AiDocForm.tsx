@@ -5,6 +5,8 @@ import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import { useToast } from "@/hooks/use-toast";
 import CloseIcon from "@/components/icons/CloseIcon";
 import ItsCode from "@/components/ItsCode";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { updateCachedProject } from "@/hooks/useOfflineStore";
 
 interface DocVersion {
   title: string;
@@ -30,6 +32,7 @@ const AiDocForm = ({ projUid, refetchProject, onClose }: Props) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
+  const { offlineFetch } = useOfflineFetch();
 
   // Version history for undo/redo
   const [history, setHistory] = useState<DocVersion[]>([]);
@@ -168,16 +171,22 @@ const AiDocForm = ({ projUid, refetchProject, onClose }: Props) => {
         docItems: currentVersion.docItems,
       };
 
-      const saveRes = await fetch("/api/addDoc", {
+      const saveRes = await offlineFetch({
+        label: `Save AI doc "${currentVersion.title}"`,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projUid, doc }),
+        url: "/api/addDoc",
+        body: { projUid, doc },
       });
 
-      const saveData = await saveRes.json();
-
-      if (!saveRes.ok) {
-        setError(saveData.error || "Failed to save doc");
+      if (!saveRes) {
+        // queued offline — optimistically add doc to cache
+        updateCachedProject(projUid, (p) => ({
+          ...p,
+          docs: [...(p.docs || []), doc],
+        }));
+        toast({ title: "AI doc queued offline", variant: "blue" });
+        refetchProject();
+        onClose();
         setLoading(false);
         return;
       }

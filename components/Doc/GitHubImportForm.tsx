@@ -4,6 +4,8 @@ import { v4 } from "uuid";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import { useToast } from "@/hooks/use-toast";
 import CloseIcon from "@/components/icons/CloseIcon";
+import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { updateCachedProject } from "@/hooks/useOfflineStore";
 
 // --- Types ---
 
@@ -111,6 +113,7 @@ const GitHubImportForm = ({
   defaultRepo,
 }: Props) => {
   const { toast } = useToast();
+  const { offlineFetch } = useOfflineFetch();
   const logEndRef = useRef<HTMLDivElement>(null);
 
   // Form state
@@ -499,16 +502,22 @@ const GitHubImportForm = ({
       };
 
       try {
-        const res = await fetch("/api/addDoc", {
+        const res = await offlineFetch({
+          label: `Save GitHub doc "${gen.title}"`,
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projUid, doc: newDoc }),
+          url: "/api/addDoc",
+          body: { projUid, doc: newDoc },
         });
 
-        if (res.ok) {
+        if (res) {
           saved++;
         } else {
-          addLog("error", `Failed to save "${gen.title}"`);
+          // queued offline — optimistically add to cache
+          updateCachedProject(projUid, (p) => ({
+            ...p,
+            docs: [...(p.docs || []), newDoc],
+          }));
+          saved++;
         }
       } catch {
         addLog("error", `Error saving "${gen.title}"`);
