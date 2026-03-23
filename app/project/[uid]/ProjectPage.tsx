@@ -19,6 +19,9 @@ import { getImageSrc } from "@/lib/supabaseStorage";
 import AiDocForm from "@/components/Doc/AiDocForm";
 import GitHubImportForm from "@/components/Doc/GitHubImportForm";
 import EyeIcon from "@/components/icons/EyeIcon";
+import PDMLink from "@/components/Project/PDMLink";
+import PDMDiagram from "@/components/Project/PDMDiagram";
+import AddPDMForm from "@/components/Project/AddPDMForm";
 
 interface Props {
   projUid: string;
@@ -37,6 +40,8 @@ const ProjectPage = ({ projUid }: Props) => {
   const [selectedUpdate, setSelectedUpdate] = useState(-999);
   const [localDocLinks, setLocalDocLinks] = useState<Doc[]>([]);
   const [showGitHubInfo, setShowGitHubInfo] = useState(false);
+  const [selectedPDM, setSelectedPDM] = useState<PDMDiagram | null>(null);
+  const [addingPDM, setAddingPDM] = useState(false);
 
   useEffect(() => {
     if (theProject?.docs) {
@@ -100,6 +105,13 @@ const ProjectPage = ({ projUid }: Props) => {
           project.docs.find((doc: Doc) => doc.uid === selectedDoc.uid),
         );
       }
+      if (selectedPDM) {
+        setSelectedPDM(
+          project.pdmDiagrams?.find(
+            (d: PDMDiagram) => d.uid === selectedPDM.uid,
+          ) || null,
+        );
+      }
       setEditMode(false);
       setLoading(false);
     } catch (error) {
@@ -134,7 +146,7 @@ const ProjectPage = ({ projUid }: Props) => {
 
   return (
     <div className="flex flex-col w-full items-center">
-      {selectedDoc === null ? (
+      {selectedDoc === null && selectedPDM === null ? (
         <div className="w-full flex flex-col items-center">
           {theProject?.creatorUid === userId && (
             <div className="w-fit place-self-end-fix px-2">
@@ -386,9 +398,47 @@ const ProjectPage = ({ projUid }: Props) => {
               defaultRepo={theProject?.githubRepo}
             />
           )}
+          {/* PDM Diagrams Section */}
+          {theProject?.pdmDiagrams && theProject.pdmDiagrams.length > 0 && (
+            <div className="w-full flex flex-col items-center mt-6">
+              <h3 className="text-xs text-slate-500 uppercase tracking-widest mb-2">
+                Diagrams
+              </h3>
+              <ul className="flex flex-col gap-2">
+                {theProject.pdmDiagrams.map((diagram, index) => (
+                  <li
+                    onClick={() => {
+                      if (!editMode) {
+                        setSelectedPDM(diagram);
+                        window.scrollTo({ top: 0 });
+                      }
+                    }}
+                    key={index}
+                  >
+                    <PDMLink diagram={diagram} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {userId && userId === theProject?.creatorUid && (
+            <div className="flex gap-2 mt-2 mb-4 items-center">
+              <button
+                onClick={() => setAddingPDM(!addingPDM)}
+                className={`btn btn-sm btn-squish ${
+                  addingPDM ? "btn-purple" : "btn-outline"
+                }`}
+              >
+                {addingPDM ? "Close" : "+ Diagram"}
+              </button>
+            </div>
+          )}
+          {addingPDM && (
+            <AddPDMForm projUid={projUid} refetchProject={refetchProject} />
+          )}
           <p>{theMessage && theMessage}</p>
         </div>
-      ) : (
+      ) : selectedDoc !== null ? (
         <div className="relative w-full flex flex-col px-2 items-center">
           <button
             type="button"
@@ -406,7 +456,26 @@ const ProjectPage = ({ projUid }: Props) => {
             />
           )}
         </div>
-      )}
+      ) : selectedPDM !== null ? (
+        <div className="relative w-full flex flex-col px-2 items-center">
+          <button
+            type="button"
+            onClick={() => setSelectedPDM(null)}
+            className="place-self-start fixed zz-top btn btn-outline 3xs:text-md sm:text-sm btn-squish"
+          >
+            Back
+          </button>
+          {theProject && (
+            <PDMDiagram
+              theProject={theProject}
+              projUid={projUid}
+              diagram={selectedPDM}
+              refetchProject={refetchProject}
+              onDelete={() => setSelectedPDM(null)}
+            />
+          )}
+        </div>
+      ) : null}
     </div>
   );
 };

@@ -22,6 +22,7 @@ declare global {
         githubOwner?: string;
         githubRepo?: string;
         docs?: Doc[];
+        pdmDiagrams?: PDMDiagram[];
     }
     
     interface Doc {
@@ -36,5 +37,26 @@ declare global {
         uid: string;
         style: string;
         text: string;
+    }
+
+    interface PDMNode {
+        uid: string;
+        label: string;
+        color?: string;
+    }
+
+    interface PDMEdge {
+        uid: string;
+        fromNodeUid: string;
+        toNodeUid: string;
+        color?: string;
+    }
+
+    interface PDMDiagram {
+        uid: string;
+        title: string;
+        orientation: 'horizontal' | 'vertical';
+        nodes: PDMNode[];
+        edges: PDMEdge[];
     }
   }
