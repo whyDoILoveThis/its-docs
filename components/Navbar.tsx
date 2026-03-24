@@ -18,6 +18,8 @@ import ItsDropdown from "./ItsDropdown";
 import { IoSettingsOutline } from "react-icons/io5";
 import { useOfflineStore } from "@/hooks/useOfflineStore";
 import { getForceOffline, setForceOfflineSetting } from "@/lib/settingsDB";
+import ProjectExportImport from "@/components/Project/ProjectExportImport";
+import LocalProjectsViewer from "@/components/Project/LocalProjectsViewer";
 
 const Navbar = () => {
   const { isLoaded } = useAuth();
@@ -26,6 +28,10 @@ const Navbar = () => {
   const forceOffline = useOfflineStore((s) => s.forceOffline);
   const setForceOffline = useOfflineStore((s) => s.setForceOffline);
   const [mounted, setMounted] = useState(false);
+  const [exportImportView, setExportImportView] = useState<
+    null | "export" | "import"
+  >(null);
+  const [showLocalProjects, setShowLocalProjects] = useState(false);
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.ctrlKey && event.key === "k") {
@@ -110,7 +116,7 @@ const Navbar = () => {
             closeWhenClicked={false}
             btnChildren={<IoSettingsOutline className="text-xl" />}
             btnClassNames="btn btn-ghost btn-round"
-            menuClassNames="-translate-x-36 backdrop-blur-none bg-neutral-950 bg-opacity-100"
+            menuClassNames="-translate-x-36 !backdrop-blur-none !bg-neutral-950 !bg-opacity-100"
           >
             {mounted && (
               <li
@@ -131,6 +137,24 @@ const Navbar = () => {
                 </span>
               </li>
             )}
+            <li
+              className="btn btn-ghost !w-full text-sm whitespace-nowrap cursor-pointer"
+              onClick={() => setExportImportView("export")}
+            >
+              Export Project
+            </li>
+            <li
+              className="btn btn-ghost !w-full text-sm whitespace-nowrap cursor-pointer"
+              onClick={() => setExportImportView("import")}
+            >
+              Import Project
+            </li>
+            <li
+              className="btn btn-ghost !w-full text-sm whitespace-nowrap cursor-pointer"
+              onClick={() => setShowLocalProjects(true)}
+            >
+              Local Projects
+            </li>
             <li>
               <ModeToggle />
             </li>
@@ -141,6 +165,15 @@ const Navbar = () => {
         <div className="fixed inset-0 flex items-center justify-center zz-top-plus2">
           <SearchPopover onClose={() => setShowSearchPopover(false)} />
         </div>
+      )}
+      {exportImportView && (
+        <ProjectExportImport
+          initialView={exportImportView}
+          onClose={() => setExportImportView(null)}
+        />
+      )}
+      {showLocalProjects && (
+        <LocalProjectsViewer onClose={() => setShowLocalProjects(false)} />
       )}
     </div>
   );

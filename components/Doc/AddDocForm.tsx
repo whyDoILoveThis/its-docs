@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import React, { useState } from "react";
 import { v4 } from "uuid";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
-import { updateCachedProject } from "@/hooks/useOfflineStore";
+import { updateCachedProject } from "@/lib/offlineDB";
 
 interface Props {
   projUid: string;
@@ -38,7 +38,7 @@ const AddDocForm = ({ projUid, refetchProject }: Props) => {
 
       if (!result) {
         // Offline — optimistically add doc to cache
-        updateCachedProject(projUid, (p) => ({
+        await updateCachedProject(projUid, (p) => ({
           ...p,
           docs: [...(p.docs || []), { ...formData, uid: uniqueId }],
         }));

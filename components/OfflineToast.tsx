@@ -69,7 +69,9 @@ const OfflineToast = () => {
   if (!mounted) return null;
   if (count === 0 && isOnline) return null;
 
-  const replayChange = async (change: PendingChange): Promise<boolean> => {
+  const replayChange = async (
+    change: PendingChange,
+  ): Promise<"ok" | "already-synced" | "failed"> => {
     try {
       switch (change.method) {
         case "POST":
@@ -85,25 +87,37 @@ const OfflineToast = () => {
           await axios.post(change.url, change.body);
       }
       goOnline();
-      return true;
+      return "ok";
     } catch (err) {
-      if (err instanceof AxiosError && !err.response) {
-        goOffline();
+      if (err instanceof AxiosError) {
+        const status = err.response?.status;
+        // 404 = resource already gone, 409 = already exists / conflict
+        if (status === 404 || status === 409) {
+          goOnline();
+          return "already-synced";
+        }
+        if (!err.response) {
+          goOffline();
+        }
       }
-      return false;
+      return "failed";
     }
   };
 
   const handleSaveAll = async () => {
     setSaving(true);
     let succeeded = 0;
+    let alreadySynced = 0;
     let failed = 0;
 
     for (const change of [...pendingChanges]) {
-      const ok = await replayChange(change);
-      if (ok) {
+      const result = await replayChange(change);
+      if (result === "ok") {
         removeChange(change.id);
         succeeded++;
+      } else if (result === "already-synced") {
+        removeChange(change.id);
+        alreadySynced++;
       } else {
         failed++;
       }
@@ -111,22 +125,30 @@ const OfflineToast = () => {
 
     setSaving(false);
 
+    const parts: string[] = [];
+    if (succeeded > 0) parts.push(`${succeeded} synced`);
+    if (alreadySynced > 0) parts.push(`${alreadySynced} already synced`);
+    if (failed > 0) parts.push(`${failed} still pending`);
+
     if (failed === 0) {
-      toast({ title: `All ${succeeded} changes synced`, variant: "green" });
+      toast({ title: parts.join(", "), variant: "green" });
       setIsOpen(false);
     } else {
-      toast({
-        title: `${succeeded} synced, ${failed} still pending`,
-        variant: "red",
-      });
+      toast({ title: parts.join(", "), variant: "red" });
     }
   };
 
   const handleSaveOne = async (change: PendingChange) => {
-    const ok = await replayChange(change);
-    if (ok) {
+    const result = await replayChange(change);
+    if (result === "ok") {
       removeChange(change.id);
       toast({ title: `Synced: ${change.label}`, variant: "green" });
+    } else if (result === "already-synced") {
+      removeChange(change.id);
+      toast({
+        title: `Already synced: ${change.label}`,
+        variant: "green",
+      });
     } else {
       toast({ title: `Failed: ${change.label}`, variant: "red" });
     }
@@ -138,7 +160,7 @@ const OfflineToast = () => {
     );
     if (confirmed) {
       removeChange(change.id);
-      revertCachedChange(change);
+      await revertCachedChange(change);
     }
   };
 

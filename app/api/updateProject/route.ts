@@ -17,7 +17,7 @@ export async function PUT(request: Request) {
     }
 
     // Validate fields: Only allow specific keys to be updated
-    const allowedUpdates = ['birth', 'title', 'desc', 'logoUrl', 'githubOwner', 'githubRepo'];
+    const allowedUpdates = ['birth', 'title', 'desc', 'logoUrl', 'githubOwner', 'githubRepo', 'docs', 'pdmDiagrams'];
     const updateFields = Object.keys(updates);
     const isValidUpdate = updateFields.every((key) => allowedUpdates.includes(key));
 

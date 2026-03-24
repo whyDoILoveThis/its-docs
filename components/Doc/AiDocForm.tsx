@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import CloseIcon from "@/components/icons/CloseIcon";
 import ItsCode from "@/components/ItsCode";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
-import { updateCachedProject } from "@/hooks/useOfflineStore";
+import { updateCachedProject } from "@/lib/offlineDB";
 
 interface DocVersion {
   title: string;
@@ -180,7 +180,7 @@ const AiDocForm = ({ projUid, refetchProject, onClose }: Props) => {
 
       if (!saveRes) {
         // queued offline — optimistically add doc to cache
-        updateCachedProject(projUid, (p) => ({
+        await updateCachedProject(projUid, (p) => ({
           ...p,
           docs: [...(p.docs || []), doc],
         }));

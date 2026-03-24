@@ -5,7 +5,7 @@ import ItsFileInput from "../ItsFileInput";
 import { fbUploadImage, fbDeleteImage } from "@/lib/supabaseStorage";
 import Image from "next/image";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
-import { updateCachedProject } from "@/hooks/useOfflineStore";
+import { updateCachedProject } from "@/lib/offlineDB";
 
 interface Props {
   refetchProject: () => void;
@@ -100,7 +100,7 @@ const UpdateProjectForm = ({
 
       if (!result) {
         // Offline — optimistically update cache
-        updateCachedProject(proj.uid, (p) => ({ ...p, ...updates }));
+        await updateCachedProject(proj.uid, (p) => ({ ...p, ...updates }));
       }
 
       setMessage("Project updated successfully!");

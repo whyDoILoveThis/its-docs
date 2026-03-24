@@ -28,7 +28,7 @@ import ItsSkeleton from "../ItsSkeleton";
 import AiModifyDocForm from "./AiModifyDocForm";
 import GitHubDocModifyForm from "./GitHubDocModifyForm";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
-import { updateCachedProject } from "@/hooks/useOfflineStore";
+import { updateCachedProject } from "@/lib/offlineDB";
 
 interface Props {
   doc: Doc;
@@ -88,9 +88,9 @@ const Doc = ({
   }, [image]);
 
   useEffect(() => {
-    if (doc.docItems) setLocalDocItems(doc.docItems);
+    if (doc?.docItems) setLocalDocItems(doc.docItems);
     console.log("setLocalDocItems");
-  }, [doc.docItems]);
+  }, [doc?.docItems]);
 
   useEffect(() => {
     if (replaceImage === true) {
@@ -217,7 +217,7 @@ const Doc = ({
 
       if (!itemsResult) {
         // Offline — optimistically update cache
-        updateCachedProject(projUid, (p) => ({
+        await updateCachedProject(projUid, (p) => ({
           ...p,
           docs: p.docs?.map((d) =>
             d.uid === doc.uid
@@ -263,7 +263,7 @@ const Doc = ({
 
       if (!result) {
         // Offline — optimistically add to cache
-        updateCachedProject(projUid, (p) => ({
+        await updateCachedProject(projUid, (p) => ({
           ...p,
           docs: p.docs?.map((d) =>
             d.uid === doc.uid
@@ -302,7 +302,7 @@ const Doc = ({
 
           if (!result) {
             // Offline — optimistically remove from cache
-            updateCachedProject(projUid, (p) => ({
+            await updateCachedProject(projUid, (p) => ({
               ...p,
               docs: p.docs?.filter((d) => d.uid !== doc.uid),
             }));

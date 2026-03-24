@@ -9,7 +9,7 @@ import React, {
 import { useAuth } from "@clerk/nextjs";
 import { v4 } from "uuid";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
-import { updateCachedProject } from "@/hooks/useOfflineStore";
+import { updateCachedProject } from "@/lib/offlineDB";
 import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import { useToast } from "@/hooks/use-toast";
 import { useConfirm } from "@/components/ItsConfirmProvider";
@@ -419,7 +419,7 @@ const PDMDiagram = ({
       toast({ title: "Diagram saved", variant: "green" });
     } else {
       // Offline — optimistically update cache
-      updateCachedProject(projUid, (p) => ({
+      await updateCachedProject(projUid, (p) => ({
         ...p,
         pdmDiagrams: p.pdmDiagrams?.map((d) =>
           d.uid === diagram.uid
@@ -447,7 +447,7 @@ const PDMDiagram = ({
 
     if (!result) {
       // Offline — optimistically remove from cache
-      updateCachedProject(projUid, (p) => ({
+      await updateCachedProject(projUid, (p) => ({
         ...p,
         pdmDiagrams: p.pdmDiagrams?.filter((d) => d.uid !== diagram.uid),
       }));
@@ -866,7 +866,7 @@ const PDMDiagram = ({
               if (!pos) return null;
               const color = node.color || DEFAULT_COLOR;
               const isSelected = node.uid === selectedNodeUid;
-              const isConnecting = connectFrom === node.uid;
+              //// const isConnecting = connectFrom === node.uid;
 
               return (
                 <g

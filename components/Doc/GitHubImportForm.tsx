@@ -5,7 +5,7 @@ import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import { useToast } from "@/hooks/use-toast";
 import CloseIcon from "@/components/icons/CloseIcon";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
-import { updateCachedProject } from "@/hooks/useOfflineStore";
+import { updateCachedProject } from "@/lib/offlineDB";
 
 // --- Types ---
 
@@ -513,7 +513,7 @@ const GitHubImportForm = ({
           saved++;
         } else {
           // queued offline — optimistically add to cache
-          updateCachedProject(projUid, (p) => ({
+          await updateCachedProject(projUid, (p) => ({
             ...p,
             docs: [...(p.docs || []), newDoc],
           }));

@@ -6,11 +6,8 @@ import LoaderSpinSmall from "@/components/LoaderSpinSmall";
 import UpdateProfileForm from "@/components/Profile/UpdateProfileForm";
 import ItsDropdown from "@/components/ItsDropdown";
 import EditIcon from "@/components/icons/EditIcon";
-import {
-  cacheProject,
-  getCachedProjectsByCreator,
-  useOfflineStore,
-} from "@/hooks/useOfflineStore";
+import { useOfflineStore } from "@/hooks/useOfflineStore";
+import { cacheProject, getCachedProjectsByCreator } from "@/lib/offlineDB";
 
 const FETCH_TIMEOUT = 10_000;
 
@@ -56,7 +53,7 @@ const ProfilePage = ({ userUid }: Props) => {
     // If already known offline, skip network and use cache
     const { isOnline, goOffline } = useOfflineStore.getState();
     if (!isOnline) {
-      const cached = getCachedProjectsByCreator(creatorUid);
+      const cached = await getCachedProjectsByCreator(creatorUid);
       if (cached.length > 0) {
         setProjects(cached);
       }
@@ -78,7 +75,7 @@ const ProfilePage = ({ userUid }: Props) => {
 
       // Cache each project for offline use
       if (projects) {
-        projects.forEach((p: Project) => cacheProject(p));
+        for (const p of projects) await cacheProject(p);
       }
 
       setProjects(projects);
@@ -87,7 +84,7 @@ const ProfilePage = ({ userUid }: Props) => {
       console.error("Error fetching projects:", error);
       goOffline();
       // Fall back to cached projects
-      const cached = getCachedProjectsByCreator(creatorUid);
+      const cached = await getCachedProjectsByCreator(creatorUid);
       if (cached.length > 0) {
         setProjects(cached);
       }
@@ -124,10 +121,12 @@ const ProfilePage = ({ userUid }: Props) => {
   // Re-read from cache when a pending change is discarded
   useEffect(() => {
     if (cacheRevision === 0) return;
-    const cached = getCachedProjectsByCreator(userUid);
-    if (cached.length > 0) {
-      setProjects(cached);
-    }
+    (async () => {
+      const cached = await getCachedProjectsByCreator(userUid);
+      if (cached.length > 0) {
+        setProjects(cached);
+      }
+    })();
   }, [cacheRevision, userUid]);
 
   useEffect(() => {

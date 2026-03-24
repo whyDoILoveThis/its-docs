@@ -1,14 +1,27 @@
 "use client";
 import { create } from "zustand";
+import {
+  loadQueue,
+  saveQueueItem,
+  removeQueueItem,
+  clearQueue,
+  updateCachedProject,
+  removeCachedProject,
+  ensurePersisted,
+  isPersisted,
+} from "@/lib/offlineDB";
+import type { PendingChange } from "@/lib/offlineDB";
 
-export interface PendingChange {
-  id: string;
-  label: string;
-  method: string;
-  url: string;
-  body: unknown;
-  createdAt: number;
-}
+// Re-export so existing imports keep working
+export type { PendingChange } from "@/lib/offlineDB";
+export {
+  cacheProject,
+  getCachedProject,
+  getAllCachedProjects,
+  getCachedProjectsByCreator,
+  updateCachedProject,
+  removeCachedProject,
+} from "@/lib/offlineDB";
 
 interface OfflineState {
   pendingChanges: PendingChange[];
@@ -16,6 +29,7 @@ interface OfflineState {
   isOnline: boolean;
   forceOffline: boolean;
   cacheRevision: number;
+  storagePersisted: boolean;
   setIsOpen: (open: boolean) => void;
   goOffline: () => void;
   goOnline: () => void;
@@ -24,91 +38,12 @@ interface OfflineState {
   removeChange: (id: string) => void;
   clearAll: () => void;
   bumpCacheRevision: () => void;
-}
-
-const QUEUE_KEY = "its-the-docs-offline-queue";
-const CACHE_KEY = "its-the-docs-project-cache";
-
-function loadQueue(): PendingChange[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(QUEUE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveQueue(changes: PendingChange[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(changes));
-  } catch {
-    // localStorage full or unavailable
-  }
-}
-
-// ── Project cache helpers ────────────────────────────────
-export function cacheProject(project: Project) {
-  if (typeof window === "undefined") return;
-  try {
-    const cache = getCachedProjects();
-    cache[project.uid] = project;
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-  } catch {
-    // storage full
-  }
-}
-
-export function updateCachedProject(
-  uid: string,
-  updater: (project: Project) => Project,
-): Project | null {
-  const project = getCachedProject(uid);
-  if (!project) return null;
-  const updated = updater(project);
-  cacheProject(updated);
-  return updated;
-}
-
-export function getCachedProject(uid: string): Project | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const cache = getCachedProjects();
-    return cache[uid] || null;
-  } catch {
-    return null;
-  }
-}
-
-export function getCachedProjects(): Record<string, Project> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-export function getCachedProjectsByCreator(creatorUid: string): Project[] {
-  const all = getCachedProjects();
-  return Object.values(all).filter((p) => p.creatorUid === creatorUid);
-}
-
-function removeCachedProject(uid: string) {
-  if (typeof window === "undefined") return;
-  try {
-    const cache = getCachedProjects();
-    delete cache[uid];
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-  } catch {
-    // storage full
-  }
+  hydrateQueue: () => Promise<void>;
+  requestPersistence: () => Promise<boolean>;
 }
 
 /** Revert an optimistic cache update for a pending change, then notify components. */
-export function revertCachedChange(change: PendingChange) {
+export async function revertCachedChange(change: PendingChange) {
   const body = change.body as Record<string, unknown>;
   const projUid = body?.projUid as string | undefined;
 
@@ -116,7 +51,7 @@ export function revertCachedChange(change: PendingChange) {
     case "/api/addDoc": {
       const doc = body?.doc as { uid?: string } | undefined;
       if (projUid && doc?.uid) {
-        updateCachedProject(projUid, (p) => ({
+        await updateCachedProject(projUid, (p) => ({
           ...p,
           docs: p.docs?.filter((d) => d.uid !== doc.uid),
         }));
@@ -127,7 +62,7 @@ export function revertCachedChange(change: PendingChange) {
       const docUid = body?.docUid as string | undefined;
       const docItem = body?.docItem as { uid?: string } | undefined;
       if (projUid && docUid && docItem?.uid) {
-        updateCachedProject(projUid, (p) => ({
+        await updateCachedProject(projUid, (p) => ({
           ...p,
           docs: p.docs?.map((d) =>
             d.uid === docUid
@@ -144,7 +79,7 @@ export function revertCachedChange(change: PendingChange) {
     case "/api/addPDM": {
       const diagram = body?.diagram as { uid?: string } | undefined;
       if (projUid && diagram?.uid) {
-        updateCachedProject(projUid, (p) => ({
+        await updateCachedProject(projUid, (p) => ({
           ...p,
           pdmDiagrams: p.pdmDiagrams?.filter((d) => d.uid !== diagram.uid),
         }));
@@ -154,27 +89,25 @@ export function revertCachedChange(change: PendingChange) {
     case "/api/addProject": {
       const project = body?.project as { uid?: string } | undefined;
       if (project?.uid) {
-        removeCachedProject(project.uid);
+        await removeCachedProject(project.uid);
       }
       break;
     }
-    // For updates/deletes we don't have the previous state to restore.
-    // The user can refresh when back online.
     default:
       break;
   }
 
-  // Signal components to re-read from cache
   useOfflineStore.getState().bumpCacheRevision();
 }
 
 // ── Store ────────────────────────────────────────────────
 export const useOfflineStore = create<OfflineState>((set, get) => ({
-  pendingChanges: loadQueue(),
+  pendingChanges: [],
   isOpen: false,
   isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
   forceOffline: false,
   cacheRevision: 0,
+  storagePersisted: false,
 
   setIsOpen: (open) => set({ isOpen: open }),
 
@@ -198,18 +131,37 @@ export const useOfflineStore = create<OfflineState>((set, get) => ({
 
   addChange: (change) => {
     const updated = [...get().pendingChanges, change];
-    saveQueue(updated);
     set({ pendingChanges: updated, isOpen: true });
+    saveQueueItem(change).catch(() => {});
   },
 
   removeChange: (id) => {
     const updated = get().pendingChanges.filter((c) => c.id !== id);
-    saveQueue(updated);
     set({ pendingChanges: updated });
+    removeQueueItem(id).catch(() => {});
   },
 
   clearAll: () => {
-    saveQueue([]);
     set({ pendingChanges: [] });
+    clearQueue().catch(() => {});
+  },
+
+  hydrateQueue: async () => {
+    const changes = await loadQueue();
+    set({ pendingChanges: changes });
+  },
+
+  requestPersistence: async () => {
+    const granted = await ensurePersisted();
+    set({ storagePersisted: granted });
+    return granted;
   },
 }));
+
+// Hydrate from IndexedDB on first client load
+if (typeof window !== "undefined") {
+  useOfflineStore.getState().hydrateQueue();
+  isPersisted().then((val) =>
+    useOfflineStore.setState({ storagePersisted: val }),
+  );
+}

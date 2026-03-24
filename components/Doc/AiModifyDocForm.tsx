@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import CloseIcon from "@/components/icons/CloseIcon";
 import ItsCode from "@/components/ItsCode";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
-import { updateCachedProject } from "@/hooks/useOfflineStore";
+import { updateCachedProject } from "@/lib/offlineDB";
 
 interface DocOperation {
   type: "replace" | "insert_after" | "delete";
@@ -257,7 +257,7 @@ const AiModifyDocForm = ({
 
       if (!saveRes) {
         // Offline — optimistically update cache
-        updateCachedProject(projUid, (p) => ({
+        await updateCachedProject(projUid, (p) => ({
           ...p,
           docs: p.docs?.map((d) =>
             d.uid === doc.uid ? { ...d, docItems: currentItems } : d,

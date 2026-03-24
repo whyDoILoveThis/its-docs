@@ -26,12 +26,12 @@ import PasskeyModal from "@/components/Project/PasskeyModal";
 import { verifyPasskey, hasPasskey } from "@/lib/passkey";
 import { IoLockClosedOutline, IoLockOpenOutline } from "react-icons/io5";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
+import { useOfflineStore } from "@/hooks/useOfflineStore";
 import {
   cacheProject,
   getCachedProject,
   updateCachedProject,
-  useOfflineStore,
-} from "@/hooks/useOfflineStore";
+} from "@/lib/offlineDB";
 
 const FETCH_TIMEOUT = 10_000;
 
@@ -93,21 +93,24 @@ const ProjectPage = ({ projUid }: Props) => {
   // Re-read from cache when a pending change is discarded (cacheRevision changes)
   useEffect(() => {
     if (cacheRevision === 0) return; // skip initial mount
-    const cached = getCachedProject(projUid);
-    if (cached) {
-      setTheProject(cached);
-      setSelectedDoc((prev) =>
-        prev
-          ? (cached.docs?.find((d: Doc) => d.uid === prev.uid) ?? null)
-          : null,
-      );
-      setSelectedPDM((prev) =>
-        prev
-          ? (cached.pdmDiagrams?.find((d: PDMDiagram) => d.uid === prev.uid) ??
-            null)
-          : null,
-      );
-    }
+    (async () => {
+      const cached = await getCachedProject(projUid);
+      if (cached) {
+        setTheProject(cached);
+        setSelectedDoc((prev) =>
+          prev
+            ? (cached.docs?.find((d: Doc) => d.uid === prev.uid) ?? null)
+            : null,
+        );
+        setSelectedPDM((prev) =>
+          prev
+            ? (cached.pdmDiagrams?.find(
+                (d: PDMDiagram) => d.uid === prev.uid,
+              ) ?? null)
+            : null,
+        );
+      }
+    })();
   }, [cacheRevision, projUid]);
 
   const moveItemUp = (index: number) => {
@@ -142,7 +145,7 @@ const ProjectPage = ({ projUid }: Props) => {
 
       if (!result && theProject) {
         // Offline — optimistically update cache
-        updateCachedProject(theProject.uid, (p) => ({
+        await updateCachedProject(theProject.uid, (p) => ({
           ...p,
           docs: localDocLinks,
         }));
@@ -163,7 +166,7 @@ const ProjectPage = ({ projUid }: Props) => {
     // If already known offline, skip network and use cache immediately
     const { isOnline } = useOfflineStore.getState();
     if (!isOnline) {
-      const cached = getCachedProject(projUid);
+      const cached = await getCachedProject(projUid);
       if (cached) {
         setTheProject(cached);
         if (selectedDoc) {
@@ -196,13 +199,13 @@ const ProjectPage = ({ projUid }: Props) => {
       const message = response.data.message;
 
       // Cache for offline use
-      if (project) cacheProject(project);
+      if (project) await cacheProject(project);
 
       setTheMessage(message);
       setTheProject(project);
       if (selectedDoc) {
         setSelectedDoc(
-          project.docs.find((doc: Doc) => doc.uid === selectedDoc.uid),
+          project.docs.find((doc: Doc) => doc.uid === selectedDoc.uid) || null,
         );
       }
       if (selectedPDM) {
@@ -218,7 +221,7 @@ const ProjectPage = ({ projUid }: Props) => {
       console.error("Error fetching project:", error);
       goOffline();
       // Fall back to cached version
-      const cached = getCachedProject(projUid);
+      const cached = await getCachedProject(projUid);
       if (cached) {
         setTheProject(cached);
         if (selectedDoc) {
@@ -240,31 +243,31 @@ const ProjectPage = ({ projUid }: Props) => {
     }
   };
 
-  // Apply a local-only project update (for offline optimistic changes)
-  const applyLocalProjectUpdate = (updater: (project: Project) => Project) => {
-    if (!theProject) return;
-    const updated = updater(theProject);
-    setTheProject(updated);
-    cacheProject(updated);
-    if (selectedDoc) {
-      setSelectedDoc(
-        updated.docs?.find((doc: Doc) => doc.uid === selectedDoc.uid) || null,
-      );
-    }
-    if (selectedPDM) {
-      setSelectedPDM(
-        updated.pdmDiagrams?.find(
-          (d: PDMDiagram) => d.uid === selectedPDM.uid,
-        ) || null,
-      );
-    }
-  };
+  // // Apply a local-only project update (for offline optimistic changes)
+  // const applyLocalProjectUpdate = (updater: (project: Project) => Project) => {
+  //   if (!theProject) return;
+  //   const updated = updater(theProject);
+  //   setTheProject(updated);
+  //   cacheProject(updated); // fire-and-forget async
+  //   if (selectedDoc) {
+  //     setSelectedDoc(
+  //       updated.docs?.find((doc: Doc) => doc.uid === selectedDoc.uid) || null,
+  //     );
+  //   }
+  //   if (selectedPDM) {
+  //     setSelectedPDM(
+  //       updated.pdmDiagrams?.find(
+  //         (d: PDMDiagram) => d.uid === selectedPDM.uid,
+  //       ) || null,
+  //     );
+  //   }
+  // };
 
   const refetchProject = async () => {
     // If offline, just reload from cache (instant, no spinner)
     const { isOnline } = useOfflineStore.getState();
     if (!isOnline) {
-      const cached = getCachedProject(projUid);
+      const cached = await getCachedProject(projUid);
       if (cached) {
         setTheProject(cached);
         if (selectedDoc) {

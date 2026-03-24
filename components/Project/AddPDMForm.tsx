@@ -2,7 +2,7 @@
 import LoaderSpinner from "@/components/LoaderSpinner";
 import { useToast } from "@/hooks/use-toast";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
-import { updateCachedProject } from "@/hooks/useOfflineStore";
+import { updateCachedProject } from "@/lib/offlineDB";
 import React, { useState } from "react";
 import { v4 } from "uuid";
 
@@ -42,7 +42,7 @@ const AddPDMForm = ({ projUid, refetchProject }: Props) => {
 
       if (!result) {
         // Offline — optimistically add diagram to cache
-        updateCachedProject(projUid, (p) => ({
+        await updateCachedProject(projUid, (p) => ({
           ...p,
           pdmDiagrams: [
             ...(p.pdmDiagrams || []),

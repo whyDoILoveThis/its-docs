@@ -7,7 +7,7 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { v4 } from "uuid";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
-import { cacheProject } from "@/hooks/useOfflineStore";
+import { cacheProject } from "@/lib/offlineDB";
 
 interface Props {
   refetchProjects: () => void;
@@ -73,7 +73,7 @@ const AddProjForm = ({ refetchProjects }: Props) => {
 
       if (!result) {
         // Offline — optimistically cache the new project
-        cacheProject(projPayload as Project);
+        await cacheProject(projPayload as Project);
       }
 
       const data = result?.data;
