@@ -1,9 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
-import { useOfflineStore, PendingChange } from "@/hooks/useOfflineStore";
+import {
+  useOfflineStore,
+  PendingChange,
+  revertCachedChange,
+} from "@/hooks/useOfflineStore";
 import { useToast } from "@/hooks/use-toast";
 import { useConfirm } from "@/components/ItsConfirmProvider";
+import { useFirebasePresence } from "@/hooks/useFirebasePresence";
 import CloseIcon from "@/components/icons/CloseIcon";
 
 const METHOD_COLORS: Record<string, string> = {
@@ -29,6 +34,9 @@ const OfflineToast = () => {
   const [saving, setSaving] = useState(false);
   const [mounted, setMounted] = useState(false);
   const wasOnlineRef = React.useRef(true);
+
+  // Firebase Realtime DB presence listener
+  useFirebasePresence();
 
   // Defer rendering until after hydration
   useEffect(() => setMounted(true), []);
@@ -130,6 +138,7 @@ const OfflineToast = () => {
     );
     if (confirmed) {
       removeChange(change.id);
+      revertCachedChange(change);
     }
   };
 
@@ -166,7 +175,7 @@ const OfflineToast = () => {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-4 right-4 zz-top-plus1 ${
+        className={`fixed bottom-4 right-4 z-ten ${
           !isOnline ? "bg-red-600" : "bg-orange-600"
         } bg-opacity-90 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-lg hover:bg-opacity-100 transition-all cursor-pointer flex items-center gap-1.5`}
       >
@@ -182,7 +191,7 @@ const OfflineToast = () => {
 
   // Expanded panel
   return (
-    <div className="fixed bottom-4 right-4 zz-top-plus1 w-80 max-h-[70vh] flex flex-col rounded-lg shadow-2xl border border-red-500 bg-red-950 bg-opacity-95 text-white overflow-hidden">
+    <div className="fixed bottom-4 right-4 z-ten w-80 max-h-[70vh] flex flex-col rounded-lg shadow-2xl border border-red-500 bg-neutral-900 text-white overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-red-800">
         <div className="flex items-center gap-2">
@@ -224,7 +233,7 @@ const OfflineToast = () => {
           {pendingChanges.map((change) => (
             <div
               key={change.id}
-              className="flex flex-col bg-red-900 bg-opacity-60 rounded px-2 py-1.5 text-xs gap-1"
+              className="flex flex-col bg-neutral-800 bg-opacity-60 rounded px-2 py-1.5 text-xs gap-1"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
@@ -246,7 +255,8 @@ const OfflineToast = () => {
                 <div className="flex items-center gap-1 shrink-0 pt-0.5">
                   <button
                     onClick={() => handleSaveOne(change)}
-                    className="text-green-400 hover:text-green-300 text-[10px] font-semibold cursor-pointer"
+                    disabled={!isOnline}
+                    className="text-green-400 hover:text-green-300 text-[10px] font-semibold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Sync
                   </button>
@@ -272,8 +282,8 @@ const OfflineToast = () => {
         <div className="flex items-center gap-2 px-3 py-2 border-t border-red-800">
           <button
             onClick={handleSaveAll}
-            disabled={saving}
-            className="flex-1 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-semibold py-1.5 rounded transition-colors cursor-pointer"
+            disabled={saving || !isOnline}
+            className="flex-1 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-semibold py-1.5 rounded transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             {saving ? "Syncing..." : "Sync All"}
           </button>

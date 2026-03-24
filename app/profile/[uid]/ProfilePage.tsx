@@ -23,6 +23,7 @@ const ProfilePage = ({ userUid }: Props) => {
   const [loading, setLoading] = useState(true);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const cacheRevision = useOfflineStore((s) => s.cacheRevision);
 
   const checkUser = async (uid: string) => {
     const { isOnline } = useOfflineStore.getState();
@@ -120,6 +121,15 @@ const ProfilePage = ({ userUid }: Props) => {
     g();
   }, [userUid]);
 
+  // Re-read from cache when a pending change is discarded
+  useEffect(() => {
+    if (cacheRevision === 0) return;
+    const cached = getCachedProjectsByCreator(userUid);
+    if (cached.length > 0) {
+      setProjects(cached);
+    }
+  }, [cacheRevision, userUid]);
+
   useEffect(() => {
     if (!showSettings) {
       setEditingField(null);
@@ -139,7 +149,7 @@ const ProfilePage = ({ userUid }: Props) => {
         <ItsDropdown
           closeWhenClicked={true}
           btnText="Settings"
-          btnClassNames="btn btn-outline btn-xs btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
+          btnClassNames="btn !z-ten btn-outline btn-xs btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
           menuClassNames="-translate-x-24"
         >
           <li

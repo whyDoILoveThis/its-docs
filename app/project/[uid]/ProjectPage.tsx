@@ -22,6 +22,9 @@ import EyeIcon from "@/components/icons/EyeIcon";
 import PDMLink from "@/components/Project/PDMLink";
 import PDMDiagram from "@/components/Project/PDMDiagram";
 import AddPDMForm from "@/components/Project/AddPDMForm";
+import PasskeyModal from "@/components/Project/PasskeyModal";
+import { verifyPasskey, hasPasskey } from "@/lib/passkey";
+import { IoLockClosedOutline, IoLockOpenOutline } from "react-icons/io5";
 import { useOfflineFetch } from "@/hooks/useOfflineFetch";
 import {
   cacheProject,
@@ -40,6 +43,7 @@ const ProjectPage = ({ projUid }: Props) => {
   const { userId } = useAuth();
   const { offlineFetch } = useOfflineFetch();
   const goOffline = useOfflineStore((s) => s.goOffline);
+  const cacheRevision = useOfflineStore((s) => s.cacheRevision);
   const [theProject, setTheProject] = useState<Project | null>(null);
   const [addingDoc, setAddingDoc] = useState(false);
   const [showAiForm, setShowAiForm] = useState(false);
@@ -53,12 +57,58 @@ const ProjectPage = ({ projUid }: Props) => {
   const [showGitHubInfo, setShowGitHubInfo] = useState(false);
   const [selectedPDM, setSelectedPDM] = useState<PDMDiagram | null>(null);
   const [addingPDM, setAddingPDM] = useState(false);
+  const [showPasskeyModal, setShowPasskeyModal] = useState(false);
+  const [passkeyUnlocked, setPasskeyUnlocked] = useState(false);
+  const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
+  const [passkeyInput, setPasskeyInput] = useState("");
+  const [passkeyError, setPasskeyError] = useState("");
+  const [projectHasPasskey, setProjectHasPasskey] = useState(false);
+
+  const isOwner =
+    (userId && userId === theProject?.creatorUid) || passkeyUnlocked;
+
+  // Check if project has a passkey set
+  useEffect(() => {
+    hasPasskey(projUid).then(setProjectHasPasskey);
+  }, [projUid]);
+
+  const handlePasskeySubmit = async () => {
+    setPasskeyError("");
+    const valid = await verifyPasskey(projUid, passkeyInput);
+    if (valid) {
+      setPasskeyUnlocked(true);
+      setShowPasskeyPrompt(false);
+      setPasskeyInput("");
+    } else {
+      setPasskeyError("Incorrect passkey");
+    }
+  };
 
   useEffect(() => {
     if (theProject?.docs) {
       setLocalDocLinks(theProject.docs);
     }
   }, [theProject?.docs]);
+
+  // Re-read from cache when a pending change is discarded (cacheRevision changes)
+  useEffect(() => {
+    if (cacheRevision === 0) return; // skip initial mount
+    const cached = getCachedProject(projUid);
+    if (cached) {
+      setTheProject(cached);
+      setSelectedDoc((prev) =>
+        prev
+          ? (cached.docs?.find((d: Doc) => d.uid === prev.uid) ?? null)
+          : null,
+      );
+      setSelectedPDM((prev) =>
+        prev
+          ? (cached.pdmDiagrams?.find((d: PDMDiagram) => d.uid === prev.uid) ??
+            null)
+          : null,
+      );
+    }
+  }, [cacheRevision, projUid]);
 
   const moveItemUp = (index: number) => {
     if (index === 0) return;
@@ -258,14 +308,78 @@ const ProjectPage = ({ projUid }: Props) => {
 
   return (
     <div className="flex flex-col w-full items-center">
+      {/* Passkey lock icon */}
+      {projectHasPasskey &&
+        !isOwner &&
+        selectedDoc === null &&
+        selectedPDM === null && (
+          <button
+            onClick={() => setShowPasskeyPrompt(true)}
+            className="fixed top-14 right-2 zz-top-minus1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer p-1"
+            title="Unlock with passkey"
+          >
+            <IoLockClosedOutline className="text-lg" />
+          </button>
+        )}
+      {isOwner &&
+        passkeyUnlocked &&
+        selectedDoc === null &&
+        selectedPDM === null && (
+          <button
+            onClick={() => {
+              setPasskeyUnlocked(false);
+              setEditMode(false);
+            }}
+            className="fixed top-24 right-2 zz-top-minus1 text-green-500 hover:text-green-300 transition-colors cursor-pointer p-1"
+            title="Lock (revoke passkey access)"
+          >
+            <IoLockOpenOutline className="text-lg" />
+          </button>
+        )}
+      {/* Passkey prompt modal */}
+      {showPasskeyPrompt && (
+        <div
+          className="fixed inset-0 zz-top bg-black bg-opacity-40 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => {
+            setShowPasskeyPrompt(false);
+            setPasskeyInput("");
+            setPasskeyError("");
+          }}
+        >
+          <div
+            className="bg-white bg-opacity-10 backdrop-blur-md border border-slate-700 rounded-lg p-6 w-full max-w-xs flex flex-col gap-3 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold">Enter Passkey</h2>
+            <input
+              type="password"
+              placeholder="Passkey"
+              value={passkeyInput}
+              onChange={(e) => setPasskeyInput(e.target.value)}
+              className="input"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && handlePasskeySubmit()}
+            />
+            {passkeyError && (
+              <p className="text-red-400 text-xs">{passkeyError}</p>
+            )}
+            <button
+              onClick={handlePasskeySubmit}
+              className="btn btn-blue w-full cursor-pointer"
+            >
+              Unlock
+            </button>
+          </div>
+        </div>
+      )}
       {selectedDoc === null && selectedPDM === null ? (
         <div className="w-full flex flex-col items-center">
-          {theProject?.creatorUid === userId && (
+          {isOwner && (
             <div className="w-fit place-self-end-fix px-2">
               <ItsDropdown
                 closeWhenClicked={true}
                 btnText="Settings"
-                btnClassNames="btn btn-outline 3xs:text-md sm:text-sm btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
+                btnClassNames="btn zz-top-minus1 btn-outline 3xs:text-md sm:text-sm btn-squish text-shadow flex gap-1 items-center backdrop-blur-md"
                 menuClassNames="-translate-x-20"
               >
                 <li
@@ -279,10 +393,22 @@ const ProjectPage = ({ projUid }: Props) => {
                 >
                   {editMode ? "Exit Edit" : "Edit"}
                 </li>
+                <li
+                  className="btn btn-ghost !w-full"
+                  onClick={() => setShowPasskeyModal(true)}
+                >
+                  Passkey
+                </li>
                 <li className="btn btn-ghost btn-red !w-full">
                   <DeleteProjectBtn projUid={projUid} />
                 </li>
               </ItsDropdown>
+              {showPasskeyModal && (
+                <PasskeyModal
+                  projectUid={projUid}
+                  onClose={() => setShowPasskeyModal(false)}
+                />
+              )}
             </div>
           )}
           {editMode && localDocLinks !== theProject?.docs && (
@@ -457,7 +583,7 @@ const ProjectPage = ({ projUid }: Props) => {
                 </li>
               ))}
           </ul>
-          {userId && userId === theProject?.creatorUid && (
+          {isOwner && (
             <div className="flex gap-2 my-4 items-center">
               <button
                 onClick={() => {
@@ -533,7 +659,7 @@ const ProjectPage = ({ projUid }: Props) => {
               </ul>
             </div>
           )}
-          {userId && userId === theProject?.creatorUid && (
+          {isOwner && (
             <div className="flex gap-2 mt-2 mb-4 items-center">
               <button
                 onClick={() => setAddingPDM(!addingPDM)}
@@ -555,7 +681,7 @@ const ProjectPage = ({ projUid }: Props) => {
           <button
             type="button"
             onClick={() => setSelectedDoc(null)}
-            className="place-self-start backdrop-blur-md fixed zz-top btn btn-outline 3xs:text-md sm:text-sm btn-squish"
+            className="place-self-start backdrop-blur-md fixed zz-top-minus1 btn btn-outline 3xs:text-md sm:text-sm btn-squish"
           >
             Back
           </button>
@@ -565,6 +691,7 @@ const ProjectPage = ({ projUid }: Props) => {
               projUid={projUid}
               refetchProjectForDocs={refetchProjectForDocs}
               doc={selectedDoc}
+              isOwner={!!isOwner}
             />
           )}
         </div>
@@ -573,7 +700,7 @@ const ProjectPage = ({ projUid }: Props) => {
           <button
             type="button"
             onClick={() => setSelectedPDM(null)}
-            className="place-self-start fixed zz-top btn btn-outline 3xs:text-md sm:text-sm btn-squish"
+            className="place-self-start fixed zz-top-minus1 btn btn-outline 3xs:text-md sm:text-sm btn-squish"
           >
             Back
           </button>

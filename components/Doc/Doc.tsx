@@ -35,9 +35,16 @@ interface Props {
   refetchProjectForDocs: () => void;
   projUid: string;
   theProject: Project;
+  isOwner?: boolean;
 }
 
-const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
+const Doc = ({
+  doc,
+  refetchProjectForDocs,
+  projUid,
+  theProject,
+  isOwner: isOwnerProp,
+}: Props) => {
   const [formData, setFormData] = useState<DocItem>({
     uid: v4(),
     style: "btn-blue",
@@ -266,6 +273,9 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
         }));
       }
 
+      // Regenerate uid so the next item gets a unique one
+      setFormData((prev) => ({ ...prev, uid: v4(), text: "" }));
+
       refetchProjectForDocs();
     } catch (error) {
       console.error("❌ An error occurred:", error);
@@ -488,8 +498,8 @@ const Doc = ({ doc, refetchProjectForDocs, projUid, theProject }: Props) => {
           </div>
         )}
       {/** SETTINGS BTN */}
-      {userId && userId === theProject.creatorUid && (
-        <div className="w-fit fixed place-self-end-fix zz-top">
+      {(isOwnerProp || (userId && userId === theProject.creatorUid)) && (
+        <div className="w-fit fixed place-self-end-fix zz-top-minus1">
           <ItsDropdown
             closeWhenClicked={true}
             btnText="Settings"

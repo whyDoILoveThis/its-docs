@@ -6,7 +6,7 @@ import FileInputButton from "../FileInputButton";
 import Image from "next/image";
 
 interface Props {
-  handleAddDocItem: (image?: File | undefined) => void;
+  handleAddDocItem: (image?: File | undefined) => Promise<void>;
   formData: DocItem;
   setFormData: (item: DocItem) => void;
 }
@@ -32,10 +32,11 @@ const AddDocItemForm = ({ handleAddDocItem, formData, setFormData }: Props) => {
   return (
     <form
       className="fixed bottom-2 flex flex-col gap-2 items-center w-full left-0 bg-black bg-opacity-60 backdrop-blur-sm py-2"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
         setLoading(true);
-        handleAddDocItem(image ? image : undefined);
+        await handleAddDocItem(image ? image : undefined);
+        setLoading(false);
       }}
     >
       <div className="relative flex items-center gap-2">

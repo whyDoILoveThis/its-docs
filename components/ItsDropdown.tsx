@@ -59,7 +59,7 @@ const ItsDropdown = ({
         <div
           onClick={() => closeWhenClicked && handleToggle()}
           ref={dropdownRef}
-          className={`absolute selection:bg-transparent transition-all duration-400 z-50 min-w-[8rem] rounded-md bg-black bg-opacity-20 shadow-md ${
+          className={`absolute selection:bg-transparent transition-all duration-400 zz-top-plus2 min-w-[8rem] rounded-md bg-black bg-opacity-20 shadow-md ${
             isOpen
               ? `opacity-100 p-2 w-fit h-fit border overflow-visible ${
                   menuClassNames && menuClassNames

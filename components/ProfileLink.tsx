@@ -88,7 +88,12 @@ export default function Home() {
   return (
     <div>
       {userExists === null && user ? (
-        "Loading..."
+        <button
+          onClick={() => userId && checkUser(userId)}
+          className="btn btn-ghost btn-xs"
+        >
+          Refetch
+        </button>
       ) : userExists === false ? (
         ""
       ) : !user ? (
