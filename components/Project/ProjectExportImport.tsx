@@ -17,7 +17,7 @@ import { useOfflineStore } from "@/hooks/useOfflineStore";
 import { hasPasskey, verifyPasskey } from "@/lib/passkey";
 
 type ModalView = null | "export" | "import";
-type ImportMode = null | "new" | "update";
+type ImportMode = null | "new" | "local" | "update";
 
 interface ProjectBackup {
   projectUid: string;
@@ -139,6 +139,7 @@ const ProjectExportImport = ({
   // ── Import as new project ────────────────────
   const handleImportAsNew = async () => {
     if (!importedProject) return;
+    setImportMode("new");
     setSavingImport(true);
     const newProject: Project = {
       ...importedProject,
@@ -168,6 +169,26 @@ const ProjectExportImport = ({
       title: userId
         ? `Imported "${newProject.title}" to your projects`
         : `Imported "${newProject.title}" locally`,
+      variant: "green",
+    });
+    onClose();
+  };
+
+  // ── Import local only (IDB, no DB) ───────────
+  const handleImportLocalOnly = async () => {
+    if (!importedProject) return;
+    setImportMode("local");
+    setSavingImport(true);
+    const newProject: Project = {
+      ...importedProject,
+      uid: v4(),
+      creatorUid: undefined,
+    };
+    await cacheProject(newProject);
+    useOfflineStore.getState().bumpCacheRevision();
+    setSavingImport(false);
+    toast({
+      title: `Imported "${newProject.title}" locally`,
       variant: "green",
     });
     onClose();
@@ -493,27 +514,36 @@ const ProjectExportImport = ({
                 ? `, ${importedProject.pdmDiagrams.length} diagram(s)`
                 : ""}
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={handleImportAsNew}
+                  className="btn btn-blue text-sm flex-1 cursor-pointer flex items-center justify-center"
+                  disabled={savingImport}
+                >
+                  {savingImport && importMode === "new" ? (
+                    <LoaderSpinSmall />
+                  ) : (
+                    "Import as New"
+                  )}
+                </button>
+                <button
+                  onClick={() => setImportMode("update")}
+                  className="btn btn-yellow text-sm flex-1 cursor-pointer flex items-center justify-center"
+                  disabled={savingImport}
+                >
+                  Update Existing
+                </button>
+              </div>
               <button
-                onClick={handleImportAsNew}
-                className="btn btn-blue text-sm flex-1 cursor-pointer flex items-center justify-center"
+                onClick={handleImportLocalOnly}
+                className="btn btn-ghost text-sm cursor-pointer flex items-center justify-center"
                 disabled={savingImport}
               >
-                {savingImport && importMode !== "update" ? (
+                {savingImport && importMode === "local" ? (
                   <LoaderSpinSmall />
                 ) : (
-                  "Import as New"
-                )}
-              </button>
-              <button
-                onClick={() => setImportMode("update")}
-                className="btn btn-yellow text-sm flex-1 cursor-pointer flex items-center justify-center"
-                disabled={savingImport}
-              >
-                {savingImport && importMode === "update" ? (
-                  <LoaderSpinSmall />
-                ) : (
-                  "Update Existing"
+                  "Import Local Only"
                 )}
               </button>
             </div>

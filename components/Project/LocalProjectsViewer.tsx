@@ -4,6 +4,7 @@ import { v4 } from "uuid";
 import {
   getAllCachedProjects,
   getCachedProject,
+  cacheProject,
   updateCachedProject,
   removeCachedProject,
 } from "@/lib/offlineDB";
@@ -53,6 +54,10 @@ const LocalProjectsViewer = ({ onClose }: Props) => {
   // Add doc
   const [addingDoc, setAddingDoc] = useState(false);
   const [newDocTitle, setNewDocTitle] = useState("");
+
+  // New project
+  const [addingProject, setAddingProject] = useState(false);
+  const [newProjTitle, setNewProjTitle] = useState("");
 
   useEffect(() => {
     loadProjects();
@@ -125,6 +130,22 @@ const LocalProjectsViewer = ({ onClose }: Props) => {
     if (!ok) return;
     await removeCachedProject(p.uid);
     toast({ title: `Removed "${p.title}"`, variant: "blue" });
+    loadProjects();
+  };
+
+  const handleNewProject = async () => {
+    if (!newProjTitle.trim()) return;
+    const proj: Project = {
+      uid: v4(),
+      birth: new Date(),
+      title: newProjTitle.trim(),
+      docs: [],
+      pdmDiagrams: [],
+    };
+    await cacheProject(proj);
+    setNewProjTitle("");
+    setAddingProject(false);
+    toast({ title: `Created "${proj.title}"`, variant: "green" });
     loadProjects();
   };
 
@@ -412,6 +433,33 @@ const LocalProjectsViewer = ({ onClose }: Props) => {
               ))}
             </ul>
           )}
+          <div className="mt-4">
+            <button
+              onClick={() => setAddingProject(!addingProject)}
+              className="btn btn-outline btn-sm cursor-pointer"
+            >
+              {addingProject ? "Cancel" : "+ New Project"}
+            </button>
+            {addingProject && (
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  placeholder="Project title"
+                  value={newProjTitle}
+                  onChange={(e) => setNewProjTitle(e.target.value)}
+                  className="input flex-1"
+                  autoFocus
+                  onKeyDown={(e) => e.key === "Enter" && handleNewProject()}
+                />
+                <button
+                  onClick={handleNewProject}
+                  className="btn btn-green btn-sm cursor-pointer"
+                >
+                  Create
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
