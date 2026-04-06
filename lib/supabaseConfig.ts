@@ -10,6 +10,6 @@ export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
     }
-    return (_supabase as Record<string, unknown>)[prop as string];
+    return (_supabase as unknown as Record<string, unknown>)[prop as string];
   },
 });

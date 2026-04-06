@@ -12,6 +12,6 @@ export const supabaseAdmin: SupabaseClient = new Proxy({} as SupabaseClient, {
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
     }
-    return (_supabaseAdmin as Record<string, unknown>)[prop as string];
+    return (_supabaseAdmin as unknown as Record<string, unknown>)[prop as string];
   },
 });
