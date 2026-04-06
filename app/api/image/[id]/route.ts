@@ -8,7 +8,7 @@ const BUCKET = "images";
 
 export async function GET(
   _req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const id = (await context.params).id;
