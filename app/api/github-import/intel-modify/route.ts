@@ -4,7 +4,6 @@ import { buildIndex } from "@/lib/repo-intel/symbolIndexer";
 import { buildDependencyGraph } from "@/lib/repo-intel/dependencyGraph";
 import {
   buildContext,
-  assembleContextText,
   buildContextSummary,
 } from "@/lib/repo-intel/contextBuilder";
 import { buildEmbeddingIndex } from "@/lib/repo-intel/embeddingEngine";
@@ -12,7 +11,7 @@ import type { RepoFile } from "@/lib/repo-intel/repoScanner";
 
 const SYSTEM_PROMPT = {
   role: "system",
-  content: `You are an elite documentation modifier powered by deep code intelligence. You have access to precisely selected, verified source code — including exact function bodies, type definitions, and dependency chains.
+  content: `You are a world-class documentation modifier powered by deep code intelligence. You have access to precisely selected, verified source code — including exact function bodies, type definitions, and dependency chains.
 
 You MUST respond with valid JSON only. No markdown, no explanation, no text outside the JSON.
 
@@ -49,16 +48,22 @@ STYLE GUIDE:
 - "btn-red" = Warnings, pitfalls, security concerns
 - "code" = Code snippets from the repo — include the most important/illustrative parts
 
-RULES:
-- ONLY use information that appears in the provided source code files. Never invent function names, variable names, imports, API routes, behaviors, or any detail not present in the code.
-- The code provided has been precisely selected from the repository using symbol indexing and dependency analysis. Trust this context — it includes the exact functions, types, and dependency chains relevant to the user's request.
-- When the user asks about a specific function, hook, component, class, or code block, find it in the provided code and include the COMPLETE function/block as a code item — do NOT summarize or abbreviate it.
-- When including code snippets, always copy them VERBATIM from the provided code. Never paraphrase, shorten, or pseudo-code real source code.
-- You may reference the dependency information provided (imports, exports, usage chains) to explain how code connects and flows.
-- Write like a knowledgeable developer explaining code to a teammate.
-- Use a natural mix of styles for visual interest.
-- Keep explanation items concise but informative. Code items should be complete and exact.
-- For "modify" mode: preserve ALL existing items unless the user explicitly says to change them.
+DOCUMENTATION QUALITY RULES:
+- ONLY use information from the provided source code. Never invent function names, variables, imports, API routes, behaviors or any detail not in the code.
+- The code has been precisely selected using symbol indexing and dependency analysis. Trust this context.
+- When including code snippets, copy them VERBATIM from the provided code. Never paraphrase, shorten, or pseudo-code real source code.
+- BE EXTREMELY THOROUGH. When the user asks about a topic, document every relevant function, type, pattern, and detail found in the provided code.
+- Each docItem should contain a full, substantive explanation — not just a one-liner. Explain the what, why, and how.
+- Create section headers for each major component, feature, or concept the user asks about.
+- Include concrete details: function signatures, parameter types, state variables, route paths, data flow.
+- Show important code blocks verbatim — key functions, types, configurations.
+- Document relationships: how modules connect, what calls what, how data flows between components.
+- When the user asks about "structure" or "how it works", break down every layer: architecture, API routes, components, state management, data models, auth, storage.
+- Write like a senior developer creating official docs. Every sentence should add real information.
+- For "add" mode: generate 10-30+ items covering the topic comprehensively.
+- For "modify" mode: make substantial, detailed improvements — don't just tweak one word.
+- You may reference the dependency information provided (imports, exports, usage chains) to explain code connections.
+- NEVER give a shallow response. If the code is there, document it in full.
 - ONLY return valid JSON, nothing else`,
 };
 
@@ -113,15 +118,20 @@ export async function POST(req: Request) {
     // Build embedding index for semantic search
     const embeddingIndex = buildEmbeddingIndex(repoIndex);
 
-    // Build intelligent context — uses BM25 search + architecture + call graph
+    // Build intelligent context for enrichment (architecture, deps, symbols)
     const context = buildContext(prompt, repoIndex, depGraph, {
       maxTokens: 18000,
       includeArchitecture: true,
       embeddingIndex,
     });
 
-    const contextText = assembleContextText(context);
     const contextSummary = buildContextSummary(context);
+
+    // Always include ALL provided files directly — they were already curated.
+    // The intelligence pipeline above is used only for architecture/symbol/dependency enrichment.
+    const rawFileContents = repoFiles
+      .map((f) => `// === ${f.path} ===\n${f.content}`)
+      .join("\n\n");
 
     // --- Build the AI prompt ---
 
@@ -137,10 +147,10 @@ export async function POST(req: Request) {
       userContent += `\n\nExisting doc items:\n${indexed}`;
     }
 
-    // Add intelligence context instead of raw file dumps
-    userContent += `\n\n## Analyzed Source Code (${context.includedFiles.length} files, ${context.totalTokens} tokens)\n`;
-    userContent += `Intelligence summary: ${contextSummary}\n\n`;
-    userContent += contextText;
+    // Add intelligence enrichment + ALL raw file code
+    userContent += `\n\n## Intelligence Analysis\n${contextSummary}\n\n`;
+    userContent += `## Source Code (${repoFiles.length} files)\n\n`;
+    userContent += rawFileContents;
 
     // Token estimate
     const estimatedTokens = Math.ceil(
@@ -161,6 +171,7 @@ export async function POST(req: Request) {
           model: "meta-llama/llama-4-scout-17b-16e-instruct",
           messages,
           temperature: 0.5,
+          max_tokens: 8192,
         }),
       },
     );

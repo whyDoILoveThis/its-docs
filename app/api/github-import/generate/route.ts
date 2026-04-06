@@ -4,7 +4,6 @@ import { buildIndex } from "@/lib/repo-intel/symbolIndexer";
 import { buildDependencyGraph } from "@/lib/repo-intel/dependencyGraph";
 import {
   buildContext,
-  assembleContextText,
   buildContextSummary,
 } from "@/lib/repo-intel/contextBuilder";
 import { buildEmbeddingIndex } from "@/lib/repo-intel/embeddingEngine";
@@ -12,7 +11,7 @@ import type { RepoFile } from "@/lib/repo-intel/repoScanner";
 
 const SYSTEM_PROMPT = {
   role: "system",
-  content: `You are an elite documentation generator powered by deep code intelligence. Given precisely selected source code (including exact function bodies, type definitions, imports, and dependency chains), you create structured documentation that explains the code clearly and accurately.
+  content: `You are a world-class documentation generator powered by deep code intelligence. Given precisely selected source code (including exact function bodies, type definitions, imports, and dependency chains), you create thorough, publication-quality structured documentation that explains the code in complete detail.
 
 You MUST respond with valid JSON only. No markdown, no explanation, no text outside the JSON.
 
@@ -41,18 +40,21 @@ STYLE GUIDE:
 - "btn-red" = Warnings, common pitfalls, security concerns
 - "code" = Code snippets — include the most important/illustrative parts
 
-RULES:
-- ONLY use information that appears in the provided source code. Never invent function names, variable names, imports, behaviors, or any detail not present in the code.
+DOCUMENTATION QUALITY RULES:
+- ONLY use information from the provided source code. Never invent function names, variables, imports, or behaviors not present in the code.
 - The code has been precisely selected using symbol indexing and dependency analysis. Trust this context.
 - When including code snippets, copy them VERBATIM from the provided code. Never paraphrase or pseudo-code.
-- Write like a knowledgeable developer explaining code to a teammate
-- Use a natural mix of styles for visual interest and meaning
-- Include relevant code snippets: key functions, patterns, types
-- Section headers should describe what that section covers
-- Be thorough but concise
-- Generate 8-25 items depending on complexity
-- If multiple files are provided, document them cohesively
-- Focus on: what it does, how it works, key patterns, important details
+- BE EXTREMELY THOROUGH. Document every function, every type, every important pattern in the code. If there are 5 API routes, document all 5 in detail.
+- Each docItem should contain a full, substantive explanation — not just one short sentence. Explain the what, why, and how.
+- Create a section header for each major component, file, module, or concept in the code.
+- Include concrete details: parameter names, return types, state variables, prop interfaces, route paths, middleware behavior.
+- Show the most important code blocks verbatim — key functions, type definitions, configuration patterns.
+- Explain data flow: where data comes from, how it's transformed, where it goes.
+- Document relationships between files: imports, exports, dependency chains, how components connect.
+- Write like a senior developer creating official documentation for a professional project.
+- Generate 15-40+ items depending on the amount of code. More code = more items. Cover everything.
+- Use a rich mix of styles for visual clarity and meaning.
+- NEVER give a shallow overview when the code provides enough detail for a thorough explanation.
 - ONLY return valid JSON, nothing else`,
 };
 
@@ -95,7 +97,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Index and build intelligent context with semantic search
+    // Index and build intelligent context for enrichment (architecture, deps, symbols)
     const repoIndex = buildIndex(repoFiles);
     const depGraph = buildDependencyGraph(repoIndex);
     const embeddingIndex = buildEmbeddingIndex(repoIndex);
@@ -105,8 +107,13 @@ export async function POST(req: Request) {
       depGraph,
       { maxTokens: 18000, includeArchitecture: true, embeddingIndex },
     );
-    const contextText = assembleContextText(context);
     const contextSummary = buildContextSummary(context);
+
+    // Always include ALL provided files directly — they were already curated by select-files AI.
+    // The intelligence pipeline above is used only for architecture/symbol/dependency enrichment.
+    const rawFileContents = repoFiles
+      .map((f) => `// === ${f.path} ===\n${f.content}`)
+      .join("\n\n");
 
     let userContent = `Create documentation for the following code files.`;
     if (docTitle) {
@@ -115,9 +122,9 @@ export async function POST(req: Request) {
     if (prompt) {
       userContent += `\nUser instructions: ${prompt}`;
     }
-    userContent += `\n\n## Analyzed Source Code (${context.includedFiles.length} files)\n`;
-    userContent += `Intelligence summary: ${contextSummary}\n\n`;
-    userContent += contextText;
+    userContent += `\n\n## Intelligence Analysis\n${contextSummary}\n\n`;
+    userContent += `## Source Code (${repoFiles.length} files)\n\n`;
+    userContent += rawFileContents;
 
     const messages = [SYSTEM_PROMPT, { role: "user", content: userContent }];
 
@@ -133,6 +140,7 @@ export async function POST(req: Request) {
           model: "meta-llama/llama-4-scout-17b-16e-instruct",
           messages,
           temperature: 0.5,
+          max_tokens: 8192,
         }),
       }
     );

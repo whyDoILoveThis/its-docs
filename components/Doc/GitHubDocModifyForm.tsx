@@ -100,7 +100,7 @@ const estimateTokens = (text: string) => Math.ceil(text.length / 4);
 
 // Token limits â€” Groq free tier is 30k TPM
 const MAX_REQUEST_TOKENS = 20000; // Safe limit per request (leaves room for system prompt + response)
-const SYSTEM_PROMPT_OVERHEAD = 600; // Estimated system prompt tokens
+const SYSTEM_PROMPT_OVERHEAD = 2200; // Estimated system prompt tokens
 const CHUNK_DELAY_MS = 6000; // Delay between chunked AI calls
 
 // Split files into chunks that fit within a token budget
@@ -186,6 +186,7 @@ const GitHubDocModifyForm = ({
 
   // Cached fetched files (reused for follow-up prompts)
   const [cachedFiles, setCachedFiles] = useState<FetchedFile[]>([]);
+  const cachedFilesRef = useRef<FetchedFile[]>([]);
 
   // Cached repo tree (reused for re-search when AI needs more files)
   const [cachedTree, setCachedTree] = useState<{ path: string }[]>([]);
@@ -368,6 +369,7 @@ Find files from this repo that are relevant to this documentation. I want to: ${
         (f) => f.content,
       );
       setCachedFiles(goodFiles);
+      cachedFilesRef.current = goodFiles;
 
       const summary = goodFiles.map((f) => f.path).join(", ");
       addMsg(
@@ -502,6 +504,7 @@ Search the entire repo, especially files that might contain this functionality â
       if (newFiles.length > 0) {
         // Merge into cache
         setCachedFiles((prev) => [...prev, ...newFiles]);
+        cachedFilesRef.current = [...cachedFilesRef.current, ...newFiles];
         addMsg(
           "system",
           `Added ${newFiles.length} new file(s): ${newFiles.map((f) => f.path).join(", ")}`,
@@ -554,12 +557,8 @@ Search the entire repo, especially files that might contain this functionality â
         }
       }
 
-      // Use the latest cached files (may have been expanded by search above)
-      let filesToUse: FetchedFile[] = [];
-      setCachedFiles((prev) => {
-        filesToUse = prev;
-        return prev;
-      });
+      // Use the latest cached files (read from ref for synchronous access)
+      let filesToUse: FetchedFile[] = [...cachedFilesRef.current];
 
       // Sort files so ones most relevant to this prompt come first
       // This ensures the important files end up in the first chunk(s)
